@@ -1,0 +1,15 @@
+**/__pycache__/
+env
+.env
+Clean_data/1min/*.csv
+Clean_data/newData/*.csv
+Clean_data/RAW_daily_data_tradingview/*.csv
+Clean_data/df_columns_exists.json
+Clean_data/uniqueTime_*.csv
+*.ipynb
+test.py
+Tracking.csv
+indicator_process/*.csv
+indicator_process/*.parquet
+indicator_process/fast_cache/_latest_file.csv
+indicator_process/fast_cache/*.parquet

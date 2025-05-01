@@ -1,0 +1,1 @@
+f'sma{value}_{ohlc}
