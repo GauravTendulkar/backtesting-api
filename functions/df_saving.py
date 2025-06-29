@@ -1,8 +1,8 @@
 import os
 from filelock import FileLock
 import pandas as pd
-import pyarrow.parquet as pq
-import pyarrow.feather as feather
+from pyarrow import parquet as pq
+from pyarrow import feather as feather
 
 extension = ".parquet"
 # extension = ".csv"
@@ -18,6 +18,15 @@ def lock_file(path, extension = extension):
     # print(lock_path)
     lock = FileLock(lock_path)
     return lock
+
+def remove_lock(path, extension = extension):
+    
+    try:
+        os.remove(f"{path}{extension}.lock")
+        
+    except:
+        pass
+    
 
 def read_file(path, extension = extension, col= None):
     # print("read_file",extension)

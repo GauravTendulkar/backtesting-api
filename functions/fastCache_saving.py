@@ -19,6 +19,14 @@ def lock_file(path, extension = extension):
     lock = FileLock(lock_path)
     return lock
 
+def remove_lock(path, extension = extension):
+    
+    try:
+        os.remove(f"{path}{extension}.lock")
+        
+    except:
+        pass
+
 def read_file(path, extension = extension, col= None):
     # print("read_file",extension)
     if extension == ".csv":

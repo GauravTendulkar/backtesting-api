@@ -17,29 +17,51 @@ stock_list = [
             # "ASHOKLEY", "ASIANPAINT", "ASTRAL", "ATUL", "AUBANK", "AUROPHARMA",
             # "AXISBANK", "BAJAJ_AUTO", "BAJAJFINSV", "BAJFINANCE", "BALKRISIND",
             # "BALRAMCHIN", "BANDHANBNK", "BANKBARODA",
-            "INFY", 
-            "AMBUJACEM",
-            "BAJFINANCE",
-            "BIOCON",
-            "COALINDIA",
-            "DIVISLAB",
-            "FEDERALBNK",
-            "GNFC",
-            "GRANULES",
-            "HCLTECH",
-            "ITC",
-            "ONGC",
-            "PEL",
-            "PERSISTENT",
-            "POLYCAB",
-            "RELIANCE",
-            "SBIN",
-            "SYNGENE",
-            "TATAMOTORS",
-            "TCS",
-            "TORNTPHARM",
-            "UPL",
-            "ZEEL",
+"AMBUJACEM",
+"BIOCON",
+"DIVISLAB",
+"FEDERALBNK",
+"GNFC",
+"GRANULES",
+"PEL",
+"PERSISTENT",
+"POLYCAB",
+"SYNGENE",
+"TORNTPHARM",
+"UPL",
+"ZEEL",
+
+# new list
+"TITAN",
+"TATAMOTORS",
+"LT",
+"BEL",
+"SBIN",
+"HINDALCO",
+"ONGC",
+"DRREDDY",
+"JSWSTEEL",
+"WIPRO",
+"ASIANPAINT",
+"TATACONSUM",
+"TCS",
+"INFY",
+"CIPLA",
+"TECHM",
+"TATASTEEL",
+"HCLTECH",
+"COALINDIA",
+"EICHERMOT",
+"INDUSINDBK",
+"SUNPHARMA",
+"BHARTIARTL",
+"AXISBANK",
+"RELIANCE",
+"BAJFINANCE",
+"ULTRACEMCO",
+"GRASIM",
+"ADANIPORTS",
+"ITC"
         ]
 
 
@@ -49,14 +71,14 @@ def random_stock_list_no_duplicates(stock_list, l):
         return stock_list
     return random.sample(stock_list, l)
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="oauth/signin", auto_error=False)
-STOCK_LIST_LIMIT = 20
-STOCK_EXECUTION_LIST_LIMIT = 20
+# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="oauth/signin", auto_error=False)
+STOCK_LIST_LIMIT = 30
+STOCK_EXECUTION_LIST_LIMIT = 30
 
 
-@stock_list_router.get("")
-async def get_stock_list(token: Optional[str] = Depends(oauth2_scheme)):
-    
+@stock_list_router.post("/get/")
+async def get_stock_list(user_email =  Body(...)):
+    print(user_email, "get_stock_list" "**********************************************")
     stockData = {
         "stockListLimit": STOCK_LIST_LIMIT,
         "stockExecutionListLimit": STOCK_EXECUTION_LIST_LIMIT,
@@ -72,14 +94,17 @@ async def get_stock_list(token: Optional[str] = Depends(oauth2_scheme)):
             # { "name": "list 3", "list": ["BALKRISIND", "BALRAMCHIN", "BANDHANBNK", "BANKBARODA"] },
         ]
     }
-    if token == None:
+    print("stockData", stockData)
+    if user_email == {}:
         return stockData
     # print("token", token)
 
-    user = dict(get_current_user(token))
+    # user = dict(get_current_user(token))
+    user_email = dict(user_email)["user_email"]
         # print(user)
-    if user:
-        stockData["customStockList"] = user["stock_list"]
+    if user_email:
+        # stockData["customStockList"] = user["stock_list"]
+        stockData["customStockList"] = configurations.collection_social_user.find_one({"email": user_email}, {"stock_list"})["stock_list"]
         return stockData
     else:
         return stockData
@@ -89,22 +114,32 @@ async def get_stock_list(token: Optional[str] = Depends(oauth2_scheme)):
 class StockListItem(BaseModel):
     name: str
     list: List[str]
+    
 
+
+class StockListItemWithEmail(BaseModel):
+    stock_list : List[StockListItem]
+    user_email : str
 
 @stock_list_router.put("")
-async def save_stock_list(
-    stockList: List[StockListItem] = Body(...),
-    token: Optional[str] = Depends(oauth2_scheme)
-):
+async def save_stock_list(stockList: StockListItemWithEmail = Body(...)):
     # Print the received list (it will be a list of StockListItem objects)
+    print(stockList)
+    print("****************************")
+    stockList = dict(stockList)
+    user_email = stockList["user_email"]
+    
+    stockList = stockList["stock_list"]
     stockList = [item.model_dump() for item in stockList]
+
+    print("put Email", user_email)
     print(stockList)
     
 
     
     # Optionally, retrieve current user based on the token.
-    user = dict(get_current_user(token))
-    if user:
+    # user = dict(get_current_user(token))
+    if user_email:
         print("stockList length", len(stockList))
         if len(stockList) > STOCK_LIST_LIMIT:
 
@@ -121,7 +156,7 @@ async def save_stock_list(
                 headers={"WWW-Authenticate": "Bearer"}
             )
         # print(user)
-        configurations.collection_user.update_one({"_id": user["_id"], "email": user["email"] }, {"$set": {"stock_list" : stockList }})
+        configurations.collection_social_user.update_one({ "email": user_email }, {"$set": {"stock_list" : stockList }})
 
         return {"message": "Stock list saved"}
     else:

@@ -24,16 +24,9 @@ from functools import partial
 import cProfile
 import io
 import pstats
-from backtesting.backtesting_2 import long_running_2 
-from backtesting.backtesting_3 import long_running_3
-from backtesting.backtesting_4 import long_running_4
-from backtesting.backtesting_5 import long_running_5
-from backtesting.backtesting_6 import long_running_6
-from backtesting.backtesting_7 import long_running_7
-from backtesting.backtesting_8 import long_running_8
-from backtesting.backtesting_9 import long_running_9
-from backtesting.backtesting_10 import long_running_10
-from backtesting.backtesting_11 import long_running_11
+from database import configurations
+import pytz
+from backtesting.backtesting_12 import long_running_12
 
 router = APIRouter()
 
@@ -68,6 +61,9 @@ async def run_in_thread(func, *args):
     return await loop.run_in_executor(thread_pool, partial(func, *args))
 
 
+def get_datetime_now():
+    return datetime.strptime(datetime.now(pytz.timezone("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S")
+
 @router.post("")
 async def root(request: Request):  
     data = await request.json()
@@ -82,5 +78,14 @@ async def root(request: Request):
 
     # return results[0]
 # Run CPU-intensive task in thread pool   
-    result = await run_in_thread(long_running_10, data)
+    # print(data.keys())
+    # print(data["contentId"])
+    # print(data["link"])
+    # print("email", data["user_email"])
+    # print(get_datetime_now())
+    configurations.collection_strategy_run.insert_one({"contentId": data["contentId"], 
+                                                       "link" : data["link"], 
+                                                       "email" : data["user_email"],
+                                                       "strategy_run_at" : get_datetime_now()})
+    result = await run_in_thread(long_running_12, data)
     return result

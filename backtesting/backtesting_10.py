@@ -478,10 +478,10 @@ def long_running_10(data):
     #     result  = execute_backtesting_logic_args(arg)
     #     # Concatenate the result to the Tracking DataFrame
     #     Tracking = pd.concat([Tracking, result], ignore_index=True)
-        # Update the cache
-        # cache_ts.update_cache(ca)
-        # print(ca_for_nparray)
-        # cache_for_nparray.update_cache(ca_for_nparray)
+    #     Update the cache
+    #     cache_ts.update_cache(ca)
+    #     print(ca_for_nparray)
+    #     cache_for_nparray.update_cache(ca_for_nparray)
     
     for i in range(0, len(Tracking)):
         if Tracking.loc[Tracking.index[i], 'buysell'] == 'buy':

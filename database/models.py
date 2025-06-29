@@ -11,6 +11,7 @@ class Equation(BaseModel):
     title: str
     description: str
     scanCategory: str
+    tags: str = "other"
     equation: str
     # updated_at: int = int(datetime.timestamp(datetime.now())) 
     # created: int = int(datetime.timestamp(datetime.now())) 
@@ -19,6 +20,7 @@ class Equation(BaseModel):
     created: datetime = datetime.strptime(datetime.now(pytz.timezone("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S")
     # email: str
     isPrivate : bool = False
+    user_email : Optional[str] = None
 
 
 # _______________________________________
@@ -63,6 +65,7 @@ class PaginationOutput(BaseModel):
     page : int
     items : list
     total_no_of_pages: int
+    
 
 
 class LinkGetOutput(BaseModel):
@@ -71,11 +74,14 @@ class LinkGetOutput(BaseModel):
     title : str
     description : str
     scanCategory : str
+    tags : str
     equation : str
     link: str
     updated_at : datetime
     created : datetime
     isPrivate : bool
+    likes : int
+    dislikes : int
     model_config = {
         "populate_by_name": True  # Allows aliasing to work
     }

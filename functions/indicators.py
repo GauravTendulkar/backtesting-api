@@ -53,12 +53,12 @@ def get_indicator_shortform(df, arr, num_one):
         
         # SMA
         if temp[2] == "sma":
-            temp_str = f"{temp[2]}{temp[4]}_{temp[3]}"
+            temp_str = f"{temp[2]}_{temp[4]}_{temp[3]}"
             if num_one == 1:
                 return sma_generator(df, temp[3], temp[4])
         # EMA
         if temp[2] == "ema":
-            temp_str = f"{temp[2]}{temp[4]}_{temp[3]}"
+            temp_str = f"{temp[2]}_{temp[4]}_{temp[3]}"
             if num_one == 1:
                 return ema_generator(df, temp[3], temp[4])
         # RSI
@@ -179,7 +179,7 @@ def convert_date_time_datetime_into_numbers_Daily(df):
 
 
 def sma_generator(df, ohlc='close', value=14):
-    column_name = f'sma{value}_{ohlc}'
+    column_name = f'sma_{value}_{ohlc}'
     # Calculate SMA using rolling window mean
     df[column_name] = df[ohlc].rolling(window=value, min_periods=value).mean()
     
@@ -187,7 +187,7 @@ def sma_generator(df, ohlc='close', value=14):
 
 def ema_generator(df, ohlc='close', value=14):
     
-    column_name = f'ema{value}_{ohlc}'
+    column_name = f'ema_{value}_{ohlc}'
     # Calculate EMA using the same logic as TradingView's ta.ema
     df[column_name] = df[ohlc].ewm(
         span=value,
@@ -649,3 +649,6 @@ def parabolicSAR_generator(df, start=0.02, increment=0.02, max_value=0.2):
     
     df[column_name] = sar
     return df
+
+
+
