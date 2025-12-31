@@ -103,7 +103,7 @@ def change_into_any_timeframe(stock, timeframe_value):
                 df = indicators.convert_date_time_datetime_into_numbers(df)
                 
                 df_saving.to_file(df, to_)
-        # print(f"outlock {timeframe_value}")
+        # print(f"outlock {timeframe_value}") 
     # print(f"Ended {timeframe_value}")
         df_saving.remove_lock(to_)
     
@@ -120,7 +120,7 @@ def apply_indicators(stock, timeframe_value ,shortform_indicator, arr):
         path = f"indicator_process/"+str(stock)+ "_"+str(timeframe_value)+"min"
     
     # print(path)    
-
+    print(path)
     if df_saving.if_path_exist(path) :
        
         df_list = df_saving.get_columns(path)
@@ -131,13 +131,17 @@ def apply_indicators(stock, timeframe_value ,shortform_indicator, arr):
             with df_saving.lock_file(path):
                 
                 df = df_saving.read_file(path)
+                print(stock, arr)
                 # print("df.columns")
                 # print(shortform_indicator)
                 if shortform_indicator not in df.columns:
                     # print(arr)
                     # print("indicator not in df.columns", shortform_indicator)
-                    
                     df = indicators.get_indicator_shortform(df, arr, 1)
+                    # try:
+                    # except :
+                    #     # print(path)
+                    #     pass
                     # print(df)
                     # df = indicators.sma_generator(df, arr[1], arr[2])
                     
@@ -152,7 +156,7 @@ def apply_indicators(stock, timeframe_value ,shortform_indicator, arr):
 # fastest way to check the columns if exists_________________________________________
 
 def is_column_present(stock, timeframe_value ,shortform_indicator):
-    print("timeframe_value________________________", timeframe_value, type(timeframe_value))
+    # print("timeframe_value________________________", timeframe_value, type(timeframe_value))
     if timeframe_value == "Daily" or timeframe_value == "Weekly" or timeframe_value == "Monthly":
         path = f"indicator_process/{stock}_{timeframe_value}"
     

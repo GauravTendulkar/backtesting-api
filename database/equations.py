@@ -22,7 +22,10 @@ from database.configurations import  client
 from pymongo import ReturnDocument
 from typing import Optional
 from pydantic import BaseModel
-
+from database import jwt_decoder
+import secrets
+import string
+from slugify import slugify
 
 equation_router = APIRouter()
 
@@ -99,16 +102,26 @@ def increment_suffix(temp):
         return f"{prefix}-{int(num) + 1}"  # Increment the number
     return temp + "-1"  # If suffix isn't a number, just add '-1'
 
+
+def generate_unique_slug(text, random_length=20, slug_max_length=50):
+    base_slug = slugify(text, max_length=slug_max_length, word_boundary=True)
+    timestamp_ms = int(time.time() * 1000)
+    allowed_chars = string.ascii_lowercase + string.digits
+    random_suffix = ''.join(secrets.choice(allowed_chars) for _ in range(random_length))
+
+    unique_slug = f"{base_slug}-{timestamp_ms}-{random_suffix}"
+    return unique_slug
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="oauth/signin")
 
 @equation_router.post("/", response_model=models.PaginationOutput)
-async def get_equations(page: int, noOfItems : int, user_email =  Body(...)):
+async def get_equations(page: int, noOfItems : int, user_email = Depends(jwt_decoder.get_current_user)):
     
 
     # user = get_current_user(token)
     # print("user", user)
     print(user_email)
-    user_email = dict(user_email)["user_email"]
+    # user_email = dict(user_email)["user_email"]
     if user_email :
 
 
@@ -143,9 +156,9 @@ class EmailRequest(BaseModel):
     user_email: Optional[str] = None
 # get data with the link
 @equation_router.post("/{link}", response_model=models.LinkGetOutput)
-async def get_equations(link: str, data  : EmailRequest  =  Body(...)):
-    print(data, link , "******************************************")
-    user_email = data.user_email
+async def get_equations(link: str,  user_email = Depends(jwt_decoder.get_current_user)):
+    # print(user_email, link , "******************************************")
+    # user_email = data.user_email
 
     equations = configurations.collection.find_one({"link": link})
     # print(equations)
@@ -179,10 +192,10 @@ async def get_equations(link: str, data  : EmailRequest  =  Body(...)):
 
 
 @equation_router.post("/delete/{id}")
-async def delete_equation(id: str, user_email =  Body(...)):
+async def delete_equation(id: str, user_email = Depends(jwt_decoder.get_current_user)):
     # user = get_current_user(token)
     # print("user", user)
-    user_email = dict(user_email)["user_email"]
+    # user_email = dict(user_email)["user_email"]
     print("Delete", user_email) 
     if user_email :
         # user = dict(user)
@@ -197,18 +210,15 @@ async def delete_equation(id: str, user_email =  Body(...)):
             return JSONResponse(content={"message": "Equation not found."}, status_code=404)
 
 @equation_router.post("/save-as/")
-async def get_equations(equation: models.Equation): 
+async def get_equations(equation: models.Equation, user_email = Depends(jwt_decoder.get_current_user)): 
     
-    # print("token", token)
-    # user = get_current_user(token)
-    # print("user", user)
     
     equation_dict = dict(equation)
-    user_email = equation_dict["user_email"]
-    print(user_email)
-    equation_dict.pop("user_email", None)
+    
+    print("save-as", user_email)
+    
     if user_email :
-        # equation_dict = dict(equation)
+        
         if len(equation_dict["title"]) == 0 :
             raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -222,29 +232,29 @@ async def get_equations(equation: models.Equation):
             headers={"WWW-Authenticate": "Bearer"}
         )
         
-        temp_str = title_to_string(equation_dict["title"])
+        # temp_str = title_to_string(equation_dict["title"])
         
-        result = configurations.collection.find({"link": {"$regex": temp_str, "$options": "i"}}, {"link": 1})
+        # result = configurations.collection.find({"link": {"$regex": temp_str, "$options": "i"}}, {"link": 1})
         
-        result = list(result)
+        # result = list(result)
         
-        result = [item['link'] for item in result]
-        # print("result*******************result", result)
-        if len(result) > 0:
-            temp_str = get_unique_link(temp_str, result)
+        # result = [item['link'] for item in result]
+        
+        # if len(result) > 0:
+        #     temp_str = get_unique_link(temp_str, result)
             
-        equation_dict["link"] = temp_str
-        
+        # equation_dict["link"] = temp_str'
+
+        equation_dict["link"] = generate_unique_slug(equation_dict["title"])
 
         equation_dict["updated_at"] = get_datetime_now()
         equation_dict["created"] = get_datetime_now()
         equation_dict["email"] = user_email
         equation_dict["likes"] = 0
         equation_dict["dislikes"] = 0
-        # print(equation_dict)
-        # print("unique link", equation_dict["link"])
+        
         new_doc = "empty value"
-        # equation_dict["link"] = "new-data-copy-1"
+        
         while new_doc:
             new_doc = configurations.collection.find_one_and_update(
                 {"link": equation_dict["link"]},                # Query to check if link exists   "new-data-copy-1"}, #
@@ -258,7 +268,7 @@ async def get_equations(equation: models.Equation):
             if new_doc is None:
                 return equation_dict["link"]
             else:
-                equation_dict["link"] = increment_suffix(equation_dict["link"])
+                equation_dict["link"] = generate_unique_slug(equation_dict["title"])
                 # time.sleep(5)
 
 
@@ -280,7 +290,7 @@ async def get_equations(equation: models.Equation):
      
 
 @equation_router.put("/{id}")
-async def get_equations(id: str, equation: models.Equation ):
+async def get_equations(id: str, equation: models.Equation, user_email = Depends(jwt_decoder.get_current_user) ):
     # user = get_current_user(token)
     # print("user", user)
     # print("equation")
@@ -288,9 +298,9 @@ async def get_equations(id: str, equation: models.Equation ):
     # user_email = dict(user_email)["user_email"]
 
     equation_dict = dict(equation)
-    user_email = equation_dict["user_email"]
-    print(user_email)
-    equation_dict.pop("user_email", None)
+    # user_email = equation_dict["user_email"]
+    print("save", user_email)
+    # equation_dict.pop("user_email", None)
     if user_email :
         print("dict(equation) PUT") 
         # ist_timezone = pytz.timezone("Asia/Kolkata")
@@ -304,7 +314,7 @@ async def get_equations(id: str, equation: models.Equation ):
         # print(equation_dict)
         # equation_dict["_id"] = ObjectId(equation_dict["_id"])
         res = configurations.collection.update_one({"_id": ObjectId(id), "email": user_email }, {"$set": equation_dict})
-        print(res)
+        # print(res)
         # res = dict(res)
         raw = res.raw_result
         updated_existing = raw.get("updatedExisting")

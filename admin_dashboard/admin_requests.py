@@ -7,76 +7,129 @@ from database import configurations
 
 import os
 import shutil
-
 from functions import df_saving, newData_concat, fastCache_saving
 from functions_v1 import memory
 from typing import Dict, List
-from pydantic import BaseModel
 import asyncio
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from typing import Optional
-from pydantic import BaseModel
-from typing import  List
 from bson import ObjectId
-import json
-
-
-
+from database import jwt_decoder
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, field_validator, Field
+from typing import List, Optional, Union
+from datetime import datetime
+from typing import Optional, List
+from database import configurations
+from fastapi import APIRouter
+from bson import ObjectId
+from datetime import datetime, timezone
 
 admin_dashboard = APIRouter()
 
 
-# permissions_list = [
-# ""
-# ]
+
 
 class UserEmail(BaseModel):
     user_email: Optional[str] = None
 
+def getRoles(roles_data: List[dict]) -> List[str]:
+    
+
+    if not roles_data:
+        return []
+
+    valid_roles = []
+    now = datetime.now(timezone.utc)
+    now = now.strftime("%Y-%m-%d %H:%M:%S")
+    now = datetime.strptime(now, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+    print("now", now)
+    for role in roles_data:
+        if not role.get("isActive", True):
+            continue
+
+        limit = role.get("limit", "unlimited")
+        print(limit)
+        if limit == "limited":
+            try:
+                end_date = role.get("end_date")
+                end_date = end_date.strftime("%Y-%m-%d %H:%M:%S")
+                end_date = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+                print("end_date", end_date, type(end_date))
+                if end_date < now:
+                    continue
+            except:
+                continue
+
+        valid_roles.append(role.get("name"))
+
+    if not valid_roles:
+        return []
+    
+    
+
+    # Fetch roles from DB
+    role_docs = configurations.collection_roles.find(
+        {"role_name": {"$in": valid_roles}},
+        {"_id": 0, "role_name": 1, "groups_permissions": 1, "isActive": 1}
+    )
+    role_docs = list(role_docs)
+
+    all_permissions = set()
+    
+    for role in role_docs:
+        if role["isActive"]:
+            
+            for gp in role["groups_permissions"]:
+                if gp["isActive"]:
+                    
+                    keys = gp.keys()
+                    if "permissions_name" in keys:
+                        if gp["isActive"]:
+                            
+                            all_permissions.add(gp["permissions_name"])
+                    if "group_name" in keys:
+                        if gp["isActive"]:
+                            for p in gp["permissions"]:
+                                if p["isActive"]:
+                                    
+                                    all_permissions.add(p["permissions_name"])
+
+    return list(all_permissions)
+
+class GetRolesRequest(BaseModel):
+    dummy: str
 
 @admin_dashboard.post("/get-roles")
-async def get_stock_list(user_email : UserEmail = Body(...)):
-    print("admin_dashboard",user_email)
-    user_email = dict(user_email)["user_email"]
-    # data = {
-    #     "admin" : {"createScan.run" :True},
-    #     "user" : {"createScan.run" :True }
-    # }
-    if user_email != None:
-        # get user roles from database
-        role = configurations.collection_social_user.find_one({"email": user_email }, {"roles": 1})
-        role = dict(role)
-        print(role)
-        role = role["roles"]
-        # role = ["admin"]
+async def get_user_permissions(user_email=Depends(jwt_decoder.get_current_user)):
+    print("User email from token:", user_email)
 
-        # get active roles from permissions from db or cache
-        data = configurations.collection_roles.find(
-            {"role_title": {"$in": role}}, 
-            {"_id" : 0}
-            )
-        data = list(data)
-        if len(data) > 0:
-            temp = {}
-            for i in data:
-                temp[i["role_title"] ] = i["permissions"]
-            data = temp
-            
-            all_permissions = []
-            for i in range(len(role)):
-                get_keys = list(data[role[i]].keys() )
-                for j in range(len(get_keys)):
-                    if  data[role[i]][get_keys[j]] == True and get_keys[j] not in all_permissions:
-                        
-                        all_permissions.append(get_keys[j])
-            return all_permissions  
-        else:
-            return []
+    if user_email:
+        user = configurations.collection_social_user.find_one(
+            {"email": user_email},
+            {"roles": 1}
+        )
+        roles_data = user.get("roles", []) if user else []
+    else:
+        roles_data = [{"name": "user-logout", "isActive": True, "limit": "unlimited"}]
 
+    permissions = getRoles(roles_data)
+    print("Final permissions:", permissions)
+    return permissions
+#     return ["createScan.run", 
+# "admin-dashboard", 
+# "admin-dashboard.upload", 
+# "admin-dashboard.roles", 
+# "admin-dashboard.permissions", 
+# "admin-dashboard.user-role-manager", 
+# "stock-list", 
+# "dashboard", 
+# "categories", 
+# "strategy-builder", 
+# "home-page"]
 
-
-
+#____________________________________________________________________________
 
 data_list = ["Clean_data/newData", "Clean_data/1min", "Clean_data/RAW_daily_data_tradingview", "indicator_process", "fastCache"]
 @admin_dashboard.get("/file-folder")
@@ -87,16 +140,19 @@ async def upload_file_list():
 UPLOAD_DIR = "Clean_data/newData"
 
 @admin_dashboard.post("/upload-new-data")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_files(files: List[UploadFile] = File(...)):
     if not os.path.exists(UPLOAD_DIR):
         os.makedirs(UPLOAD_DIR)
 
-    file_location = os.path.join(UPLOAD_DIR, file.filename)
+    saved_files = []
 
-    with open(file_location, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    for file in files:
+        file_location = os.path.join(UPLOAD_DIR, file.filename)
+        with open(file_location, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        saved_files.append(file.filename)
 
-    return {"filename": file.filename, "message": "File saved successfully"}
+    return {"message": "Files uploaded successfully", "files": saved_files}
 
 
 def get_file_names(folder_name):
@@ -112,7 +168,7 @@ def get_file_names(folder_name):
         temp = {}
         temp["file_name"] = files[i]
         a = files[i].split(".")
-        print("a", a)
+        # print("a", a)
         
         if "csv" == a[1] or "parquet" == a[1] or "feather" == a[1] or "pickle" == a[1]:
             if folder_name == "fastCache":
@@ -191,111 +247,271 @@ async def delete_upload_file_names():
 
 
 
-PERMISSIONS_FILE = "permissions.json"
+#_____________________________________________________________________ ROLES
 
-# ----------------------------
-# Models
-# ----------------------------
-class Role(BaseModel):
-    role_title: str
-    permissions: Dict[str, bool] = {}
 
-# ----------------------------
-# Get All Roles
-# ----------------------------
+
+
+
+
+
+
+
+class PermissionModel(BaseModel):
+    permissions_name: str
+    isActive: bool = True
+
+class GroupModel(BaseModel):
+    group_name: str
+    isActive: bool = True
+    permissions: List[PermissionModel] = []
+
+class FlatPermissionModel(BaseModel):
+    permissions_name: str
+    isActive: bool = True
+
+class RoleModel(BaseModel):
+    id: Optional[str] = None
+    role_name: str
+    isActive: bool = True
+    groups_permissions: List[Union[GroupModel, FlatPermissionModel]] = []
+
 @admin_dashboard.get("/get-all-roles")
 async def get_all_roles():
-    data = list(configurations.collection_roles.find())
-    for doc in data:
-        doc["_id"] = str(doc["_id"])
-    return data
+    roles = list(configurations.collection_roles.find())
+    for r in roles:
+        r["id"] = str(r.pop("_id"))
+    return roles
 
-# ----------------------------
-# Create Role
-# ----------------------------
-@admin_dashboard.post("/create-role")
-async def create_role(role: Role):
-    result = configurations.collection_roles.insert_one(role.dict())
-    return {"_id": str(result.inserted_id)}
+@admin_dashboard.get("/get-all-role-names")
+async def get_all_roles():
+    roles = list(configurations.collection_roles.find({},{"role_name": 1}))
+    for r in roles:
+        r["id"] = str(r.pop("_id"))
+    return roles
 
-# ----------------------------
-# Update Role
-# ----------------------------
-@admin_dashboard.put("/update-role/{role_id}")
-async def update_role(role_id: str, updated_role: Role):
-    result = configurations.collection_roles.update_one(
-        {"_id": ObjectId(role_id)},
-        {"$set": updated_role.dict()}
-    )
-    if result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="Role not found or no change")
-    return {"message": "Role updated successfully"}
+@admin_dashboard.post("/add-roles")
+async def add_roles(data: RoleModel):
+    role_name = data.role_name.strip().lower()
+    if configurations.collection_roles.find_one({"role_name": role_name}):
+        raise HTTPException(status_code=400, detail="Role already exists")
+    result = configurations.collection_roles.insert_one({
+        "role_name": role_name,
+        "isActive": True,
+        "groups_permissions": []
+    })
+    return {"message": "Role added successfully", "role_id": str(result.inserted_id)}
 
-# ----------------------------
-# Delete Role
-# ----------------------------
 @admin_dashboard.delete("/delete-role/{role_id}")
 async def delete_role(role_id: str):
-    result = configurations.collection_roles.delete_one({"_id": ObjectId(role_id)})
+    try:
+        res = configurations.collection_roles.delete_one({"_id": ObjectId(role_id)})
+        if res.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Role not found")
+        return {"message": "Role deleted"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@admin_dashboard.post("/save-role")
+async def save_role(data: RoleModel):
+    try:
+        if not data.id:
+            raise HTTPException(status_code=400, detail="Missing role ID")
+
+        role_id = ObjectId(data.id)
+        data.role_name = data.role_name.strip().lower()
+
+        role_dict = data.dict(exclude={"id"})
+
+        # Populate permissions for groups
+        for idx, item in enumerate(role_dict["groups_permissions"]):
+            if "group_name" in item and not item.get("permissions"):
+                group = configurations.collection_groups.find_one({"group_name": item["group_name"]})
+                if group:
+                    permissions = group.get("permissions", [])
+                    role_dict["groups_permissions"][idx]["permissions"] = permissions
+
+        # Save the updated role
+        configurations.collection_roles.update_one(
+            {"_id": role_id},
+            {"$set": role_dict}
+        )
+
+        return {"status": "success", "role": data.dict()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+#_____________________________________________________________________ Permissions
+
+class Permission(BaseModel):
+    permissions_name: str
+    isActive: bool
+
+    @field_validator("permissions_name")
+    @classmethod
+    def lowercase_and_strip(cls, v: str) -> str:
+        return v.strip().lower()
+
+# GET all permissions
+@admin_dashboard.get("/permissions")
+def get_permissions():
+    temp = list(configurations.collection_permissions.find({}, {"_id": 0}))
+    return temp
+
+# POST save permissions (unique + lowercase enforced)
+@admin_dashboard.post("/permissions/save")
+def save_permissions(data: dict):
+    permissions = data.get("permissions", [])
+
+    # Deduplicate by permission name (last one wins)
+    unique = {}
+    for perm in permissions:
+        name = perm["permissions_name"].strip().lower()
+        unique[name] = {
+            "permissions_name": name,
+            "isActive": perm["isActive"]
+        }
+
+    # Replace all in DB
+    configurations.collection_permissions.delete_many({})
+    if unique:
+        configurations.collection_permissions.insert_many(list(unique.values()))
+    return {"status": "success"}
+
+
+
+
+
+#_____________________________________________________________________ Groups
+
+
+
+
+
+def str_objectid(id):
+    return str(id) if isinstance(id, ObjectId) else id
+
+
+# ----------------------------- MODELS -----------------------------
+
+class Permission(BaseModel):
+    permissions_name: str
+    isActive: bool
+
+
+class Group(BaseModel):
+    id: Optional[str] = None  # Using `id` instead of `_id` for Pydantic compatibility
+    group_name: str
+    isActive: bool
+    permissions: List[Permission] = []
+
+    @field_validator("group_name")
+    @classmethod
+    def lowercase_and_strip(cls, v: str) -> str:
+        return v.strip().lower()
+
+
+
+
+# ✅ Get paginated groups
+@admin_dashboard.get("/groups")
+def get_groups(skip: int = 0, limit: int = 5, search: Optional[str] = None):
+    query = {}
+    if search:
+        query = {"group_name": {"$regex": search, "$options": "i"}}
+
+    cursor = configurations.collection_groups.find(query).skip(skip).limit(limit)
+    groups = []
+    for g in cursor:
+        g["id"] = str_objectid(g["_id"])
+        del g["_id"]
+        groups.append(g)
+    return groups
+
+
+# ✅ Count total groups (for pagination)
+@admin_dashboard.get("/groups/count")
+def get_group_count(search: Optional[str] = None):
+    query = {}
+    if search:
+        query["group_name"] = {"$regex": search, "$options": "i"}
+    total = configurations.collection_groups.count_documents(query)
+    return {"total": total}
+
+
+# ✅ Create new group
+@admin_dashboard.post("/groups/create")
+def create_group(data: Group):
+    group_data = data.model_dump()
+    group_data["group_name"] = group_data["group_name"].strip().lower()
+
+    # Check for existing group
+    if configurations.collection_groups.find_one({"group_name": group_data["group_name"]}):
+        raise HTTPException(status_code=400, detail="Group name already exists")
+
+    # Insert into DB
+    result = configurations.collection_groups.insert_one(group_data)
+
+    # Clean return object: include only stringified ID
+    return {
+        "status": "success",
+        "group": {
+            "id": str(result.inserted_id),
+            "group_name": group_data["group_name"],
+            "isActive": group_data["isActive"],
+            "permissions": group_data["permissions"]
+        }
+    }
+
+
+
+# ✅ Save/update group by ID only (no name check)
+@admin_dashboard.post("/groups/save")
+def save_group(data: Group):
+    group_data = data.model_dump()
+    group_data["group_name"] = group_data["group_name"].strip().lower()
+
+    if data.id:
+        try:
+            group_oid = ObjectId(data.id)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid group ID")
+
+        result = configurations.collection_groups.update_one(
+            {"_id": group_oid},
+            {"$set": {
+                "group_name": group_data["group_name"],
+                "isActive": group_data["isActive"],
+                "permissions": group_data["permissions"]
+            }}
+        )
+
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Group not found")
+
+        group_data["id"] = str(group_oid)
+        return {"status": "success", "group": group_data}
+
+    else:
+        if configurations.collection_groups.find_one({"group_name": group_data["group_name"]}):
+            raise HTTPException(status_code=400, detail="Group name already exists")
+
+        result = configurations.collection_groups.insert_one(group_data)
+        group_data["id"] = str(result.inserted_id)
+        return {"status": "success", "group": group_data}
+
+
+# ✅ Delete group by ID
+@admin_dashboard.delete("/groups/delete/{group_id}")
+def delete_group(group_id: str):
+    try:
+        group_oid = ObjectId(group_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid ID")
+
+    result = configurations.collection_groups.delete_one({"_id": group_oid})
     if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Role not found")
-    return {"message": "Role deleted successfully"}
-
-# ----------------------------
-# Get Permissions from permissions.json
-# ----------------------------
-@admin_dashboard.get("/get-permissions")
-async def get_permissions():
-    if not os.path.exists(PERMISSIONS_FILE):
-        return []
-    with open(PERMISSIONS_FILE, "r") as f:
-        return json.load(f)
-
-# ----------------------------
-# Update Permission Options in permissions.json
-# ----------------------------
-@admin_dashboard.put("/update-permissions")
-async def update_permissions(permissions: List[str]):
-    with open(PERMISSIONS_FILE, "w") as f:
-        json.dump(permissions, f)
-    return {"message": "Permissions updated"}
-
-# ----------------------------
-# Add Permission Option to permissions.json
-# ----------------------------
-@admin_dashboard.post("/add-permission")
-async def add_permission(permission: str):
-    permissions = []
-    if os.path.exists(PERMISSIONS_FILE):
-        with open(PERMISSIONS_FILE, "r") as f:
-            permissions = json.load(f)
-    if permission not in permissions:
-        permissions.append(permission)
-        with open(PERMISSIONS_FILE, "w") as f:
-            json.dump(permissions, f)
-    return {"message": "Permission added"}
-
-# ----------------------------
-# Delete Permission Option from permissions.json
-# ----------------------------
-@admin_dashboard.delete("/delete-permission/{permission}")
-async def delete_permission(permission: str):
-    if not os.path.exists(PERMISSIONS_FILE):
-        raise HTTPException(status_code=404, detail="Permission list not found")
-    with open(PERMISSIONS_FILE, "r") as f:
-        permissions = json.load(f)
-    if permission in permissions:
-        permissions.remove(permission)
-        with open(PERMISSIONS_FILE, "w") as f:
-            json.dump(permissions, f)
-    return {"message": "Permission deleted"}
-
-# ----------------------------
-# Import Roles
-# ----------------------------
-@admin_dashboard.post("/import-roles")
-async def import_roles(roles: List[Role]):
-    documents = [role.dict() for role in roles]
-    configurations.collection_roles.delete_many({})
-    configurations.collection_roles.insert_many(documents)
-    return {"message": "Roles imported successfully"}
+        raise HTTPException(status_code=404, detail="Group not found")
+    return {"status": "deleted"}

@@ -28,6 +28,7 @@ from database.likesdislikes import likesdislikes
 from database.verifytoken import protected
 from admin_dashboard.user_role_manager import admin_dashboard_social_role_change
 from database.strategy_categories import strategy_categories
+from admin_dashboard.dateRange import date_range
 
 
 
@@ -140,4 +141,5 @@ app.include_router(likesdislikes, prefix="/backend/api/likes-dislikes", tags=["u
 app.include_router(protected, prefix="/backend/api/protected", tags=["user-signin"])
 app.include_router(admin_dashboard_social_role_change, prefix="/backend/api/social-user-role-change", tags=["user-signin"])
 app.include_router(strategy_categories, prefix="/backend/api/strategy_categories", tags=["user-signin"])
+app.include_router(date_range, prefix="/backend/api/date_range", tags=["user-signin"])
 

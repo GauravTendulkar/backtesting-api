@@ -22,3 +22,11 @@ indicator_functions_list.txt
 stock_column_file_tracking.csv
 fastCache_file_tracking.csv
 
+users_41.csv
+w_data_1.csv
+w_data_2.csv
+w_data_3.csv
+w_data.csv
+output.txt
+
+functions_duckdb/indicator_files/*.parquet

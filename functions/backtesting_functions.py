@@ -347,7 +347,8 @@ def entry_to_equation(temp, option):
 #________________________________________________________________________
 #
 #
-avoid_indicators = ["H1", "H2","H3","H4", "L1", "L2","L3","L4"]
+avoid_indicators = ["H1", "H2","H3","H4", "L1", "L2","L3","L4", 
+                    "CPRPP", "CPRBC", "CPRTC", "pivotR1", "pivotR2", "pivotR3", "pivotR4", "pivotS1", "pivotS2", "pivotS3", "pivotS4"]
 #________________________________________________________________________
 # def select_candles(stock, i, column, row, df, uniqueTime, tf, df_smallest,  smallest, smallestLastTime, candle):
     # print("candle out")
@@ -948,6 +949,20 @@ def date_str_to_int(datepass: str):
 
 #________________________________________________________________________
 #
+# def find_max_df(column, prevCandles, df, datetime_number):
+#     try:
+#         # Assume df is sorted by "datetime_number"
+#         # Use searchsorted to find the index where datetime_number would be inserted (right side)
+#         idx = df["datetime_number"].searchsorted(datetime_number, side="right")
+        
+#         # Determine the starting index for the last `prevCandles` rows in the filtered subset
+#         start_idx = max(0, idx - prevCandles)
+        
+#         # Slice the DataFrame from start_idx up to idx and compute the max of the specified column
+#         return df.iloc[start_idx:idx][column].max()
+#     except :
+#         pass
+
 def find_max_df(column, prevCandles, df, datetime_number):
     try:
         # Assume df is sorted by "datetime_number"

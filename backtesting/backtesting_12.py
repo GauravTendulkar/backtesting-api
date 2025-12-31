@@ -276,7 +276,7 @@ def execute_backtesting_logic_args(args):
     return run_for_each_stock(*args)
 
 
-def long_running_12(data):
+def long_running_12(data, date_ranges):
     print("long_running_12")
     # print("____________________") 
     # print(data['stockList']) 
@@ -294,14 +294,7 @@ def long_running_12(data):
 
     
 
-    # print("scanCategory" , data['scanCategory'])
-    # tracemalloc.start()
-    # current, peak = tracemalloc.get_traced_memory()
-    # memory_check = {
-    #     "current_memory": f"{current / 10**6:.2f} MB",
-    #     "peak_memory": f"{peak / 10**6:.2f} MB"
-    # }
-    # print("start current_memory",memory_check["current_memory"],"start peak_memory", memory_check["peak_memory"])
+    
 
     initial_time = time.perf_counter()
     list_stocks = data['stockList']
@@ -333,31 +326,29 @@ def long_running_12(data):
         combine_fast_cache_list_function(fast_cache)
         fast_cache = files_check.convert_equation_to_([x["exitPrice"]], list_stocks)
         combine_fast_cache_list_function(fast_cache)
-
+    # print("fast_cache_list", fast_cache_list)
     smallest = files_check.get_smallest_tf(fast_cache_list)
-    # print("smallest", smallest)
+    print("smallest", smallest)
     for i in range(0, len(fast_cache_list)):
         fast_cache_list[i][3] = f"{smallest}_{fast_cache_list[i][3]}"
         fast_cache_list[i].append(smallest)
     # print("____________________________________")
-    # print("abc", fast_cache_list)
+    # print("fast_cache_list", fast_cache_list)
     file_path = "wait_for_update"
     lock_path = file_path + ".lock"
     lock = FileLock(lock_path)
-
+    functions.check_tf_range(smallest, data['dateRange']["from"], data['dateRange']["to"], date_ranges)
     with lock:
         pass
     create_files.create_file(fast_cache_list)
-    # fast_cache_list_1 = controller.check_column_present(fast_cache_list)
-    # print("____________________________________")
-    # print("abc", fast_cache_list_1)
-
     
+
+    #____________________________________ convert to equation logic
     date_start = backtesting_functions.date_str_to_int(data['dateRange']["from"])
     date_end = backtesting_functions.date_str_to_int(data['dateRange']["to"])
     
     entry = backtesting_functions.entry_to_equation([data["entry"]] , None, smallest)
-    # print("entry")
+    print("entry")
     # print(entry)
     entryPrice = backtesting_functions.entry_to_equation([data["entryPrice"]] , None, smallest)
     
@@ -379,7 +370,7 @@ def long_running_12(data):
         tradeSetup = "intraday_long"
     else:
         tradeSetup = data["scanCategory"] 
-
+    # initial_time = time.perf_counter()
     Tracking = pd.DataFrame()
     for t in range(len(list_stocks)):
         result = run_for_each_stock(date_start, date_end, entry, entryPrice, quantity, exitCollection, tradeSetup, list_stocks[t], fast_cache_list, smallest)
@@ -391,6 +382,12 @@ def long_running_12(data):
         if Tracking.loc[Tracking.index[i], 'buysell'] == 'sell':
             Tracking.loc[Tracking.index[i], 'pnl'] = (Tracking.loc[Tracking.index[i], 'entry'] - Tracking.loc[Tracking.index[i], 'exit'] )* Tracking.loc[Tracking.index[i], 'quantity']
 
+    # elapsed_time = time.perf_counter() - initial_time
+    # print(elapsed_time)
+    # print(f"Elapsed time: {elapsed_time * 1_000:.2f} ms")   # Microseconds
+    # print(f"Elapsed time: {elapsed_time * 1_000_000:.2f} µs")   # Microseconds
+    # print(f"Elapsed time: {elapsed_time * 1_000_000_000:.2f} ns")  # Nanoseconds
+    
     ##  track and delete extra files
     files_tracking.fastCache_file_tracking_and_deletion(copy.deepcopy(fast_cache_list), unit="Mi", memory_size= 50)
     column_not_exist = controller.check_column_present(fast_cache_list)

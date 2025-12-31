@@ -51,11 +51,13 @@ def fastCache_file_tracking_and_deletion(fileName, unit="Mi", memory_size= 10):
         
     
         df.to_csv(tracking_file_name, index=True)
+    
     try:
         os.remove("fastCache_file_tracking.csv.lock")
         
     except:
         pass
+    
 
 
 
@@ -132,7 +134,7 @@ def stock_column_file_tracking_and_deletion(fileName, unit="Mi", memory_size=10)
 
         df = df.sort_values(by="datetime", ascending=False).reset_index(drop=True)
         # df.to_csv(tracking_file_name)
-        print(df)
+        # print(df)
         while memory.sizeof_fmt(memory.get_folder_size("indicator_process"), unit=unit)[0] > memory_size :
             if len(df) == 0:
                 break
@@ -144,7 +146,7 @@ def stock_column_file_tracking_and_deletion(fileName, unit="Mi", memory_size=10)
             column = df.loc[df.index[-1], "column"]
             remove_column(stock, tf, column)
             df = df.drop(df.index[-1])
-        print(df)
+        # print(df)
         # # Save updated file list
         df.to_csv(tracking_file_name, index=True)
     try:

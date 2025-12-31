@@ -6,6 +6,7 @@ from datetime import date
 # import threading
 # import multiprocessing
 # from pathlib import Path
+from openalgo import ta
 
 #__________________________________________________________
 
@@ -65,7 +66,11 @@ def get_indicator_shortform(df, arr, num_one):
         if temp[2] == "rsi":
             temp_str = f"{temp[2]}_{temp[4]}_{temp[3]}"
             if num_one == 1:
-                return rsi_generator(df, temp[3], temp[4])
+                column_name = f'rsi_{temp[4]}_{temp[3]}'
+                df[column_name] = ta.rsi(data = df[f"{temp[3]}"] , period=temp[4] )
+                return df
+                
+                # return rsi_generator(df, temp[3], temp[4])
     # BB
     if if_index_exist(temp, [2, 3, 4, 5, 6]):
         if temp[2] == "BBbasis":
@@ -96,7 +101,50 @@ def get_indicator_shortform(df, arr, num_one):
             temp_str = f"macdHistogram_{int(temp[3])}_{int(temp[4])}_{int(temp[5])}_{str(temp[6])}"
             if num_one == 1:
                 return calculate_macd(df, int(temp[3]), int(temp[4]), int(temp[5]), str(temp[6]))
-    
+            
+    if if_index_exist(temp, [2, 3, 4, 5, 6]) :
+        # Ichimoku_cloud
+        if temp[2] == "conversionLineIC"     :
+            temp_str = f'conversionLineIC_{int(temp[3])}_{int(temp[4])}_{int(temp[5])}_{int(temp[6])}' 
+            if num_one == 1:
+                return Ichimoku_cloud(df, int(temp[3]), int(temp[4]), int(temp[5]), int(temp[6]))
+        elif temp[2] == "baseLineIC":
+            temp_str = f"baseLineIC_{int(temp[3])}_{int(temp[4])}_{int(temp[5])}_{int(temp[6])}"
+            if num_one == 1:
+                return Ichimoku_cloud(df, int(temp[3]), int(temp[4]), int(temp[5]), int(temp[6]))
+        elif temp[2] == "laggingLineIC":
+            temp_str = f"laggingLineIC_{int(temp[3])}_{int(temp[4])}_{int(temp[5])}_{int(temp[6])}"
+            if num_one == 1:
+                return Ichimoku_cloud(df, int(temp[3]), int(temp[4]), int(temp[5]), int(temp[6]))
+        elif temp[2] == "leadingSpanAIC":
+            temp_str = f"leadingSpanAIC_{int(temp[3])}_{int(temp[4])}_{int(temp[5])}_{int(temp[6])}"
+            if num_one == 1:
+                return Ichimoku_cloud(df, int(temp[3]), int(temp[4]), int(temp[5]), int(temp[6]))
+        elif temp[2] == "leadingSpanBIC":
+            temp_str = f"leadingSpanBIC_{int(temp[3])}_{int(temp[4])}_{int(temp[5])}_{int(temp[6])}"
+            if num_one == 1:
+                return Ichimoku_cloud(df, int(temp[3]), int(temp[4]), int(temp[5]), int(temp[6]))
+            
+
+    if if_index_exist(temp, [2, 3, 4]) :
+        if temp[2] == "momentum"     :
+            temp_str = f'momentum_{int(temp[3])}_{str(temp[4])}' 
+            if num_one == 1:
+                return momentum_indicator(df, int(temp[3]), str(temp[4]))
+
+
+
+    if if_index_exist(temp, [2, 3, 4, 5, 6, 7]) :
+        if temp[2] == "stochasticRSIK":
+            temp_str = f'stochasticRSIK_{int(temp[3])}_{int(temp[4])}_{int(temp[5])}_{int(temp[6])}_{str(temp[7])}' 
+            if num_one == 1:
+                return stochastic_RSI(df, int(temp[3]), int(temp[4]), int(temp[5]), int(temp[6]), str(temp[7]))
+        elif temp[2] == "stochasticRSID":
+            temp_str = f'stochasticRSID_{int(temp[3])}_{int(temp[4])}_{int(temp[5])}_{int(temp[6])}_{str(temp[7])}' 
+            if num_one == 1:
+                return stochastic_RSI(df, int(temp[3]), int(temp[4]), int(temp[5]), int(temp[6]), str(temp[7]))
+        
+   
 
     if if_index_exist(temp, [2, 3, 4]) :
         
@@ -105,14 +153,85 @@ def get_indicator_shortform(df, arr, num_one):
             temp_str = f"{temp[2]}_{temp[3]}_{temp[4]}"
             if num_one == 1:
                 return supertrend_generator(df, atr_length= temp[3], factor=temp[4])
+        
+        # ATR
+        if temp[2] == "atr":
+            temp_str = f"atr_{int(temp[3])}_{str(temp[4])}"
+            if num_one == 1:
+                return atr_generator(df, int(temp[3]), str(temp[4]))
+            
+        if temp[2] == "roc":
+            temp_str = f"roc_{int(temp[3])}_{str(temp[4])}"
+            if num_one == 1:
+                return rate_of_change(df, int(temp[3]), str(temp[4]))
+            
+        if temp[2] == "cci":
+            temp_str = f"cci_{int(temp[3])}_{str(temp[4])}"
+            if num_one == 1:
+                return cci_indicator(df, int(temp[3]), str(temp[4]))
+            
+        if temp[2] == "williamsPercentR":
+            temp_str = f"williamsPercentR_{int(temp[3])}_{str(temp[4])}"
+            if num_one == 1:
+                return williams_r(df, int(temp[3]), str(temp[4]))
+            
+        if temp[2] == "cmo":
+            temp_str = f"cmo_{int(temp[3])}_{str(temp[4])}"
+            if num_one == 1:
+                return chande_momentum_oscillator(df, int(temp[3]), str(temp[4]))
+    
+    if if_index_exist(temp, [2, 3, 4]) :
+        if temp[2] == "keltnerBasis":
+            temp_str = f"keltnerBasis_{int(temp[3])}_{float(temp[4])}"
+            if num_one == 1:
+                return keltner_channels(df, int(temp[3]), float(temp[4]))
+        if temp[2] == "keltnerUpper":
+            temp_str = f"keltnerUpper_{int(temp[3])}_{float(temp[4])}"
+            if num_one == 1:
+                return keltner_channels(df, int(temp[3]), float(temp[4]))
+        if temp[2] == "keltnerLower":
+            temp_str = f"keltnerLower_{int(temp[3])}_{float(temp[4])}"
+            if num_one == 1:
+                return keltner_channels(df, int(temp[3]), float(temp[4]))
+     
+
+
+    if if_index_exist(temp, [2, 3]) :
+
+        if temp[2] == "donchianUpper":
+            temp_str = f"donchianUpper_{int(temp[3])}"
+            if num_one == 1:
+                return donchian_channels(df, int(temp[3]))
+        elif temp[2] == "donchianLower":
+            temp_str = f"donchianLower_{int(temp[3])}"
+            if num_one == 1:
+                return donchian_channels(df, int(temp[3]))
+        elif temp[2] == "donchianMiddle":
+            temp_str = f"donchianMiddle_{int(temp[3])}"
+            if num_one == 1:
+                return donchian_channels(df, int(temp[3]))
+            
+            
+    if if_index_exist(temp, [2, 3]) :
+
+        if temp[2] == "cmf":
+            temp_str = f"cmf_{int(temp[3])}"
+            if num_one == 1:
+                return chaikin_money_flow(df, int(temp[3]))
+            
             
     if if_index_exist(temp, [2]) :
         
-        # supertrend
+        
         if temp[2] == "H1" or temp[2] == "H2" or temp[2] == "H3" or temp[2] == "H4" or temp[2] == "L1" or temp[2] == "L2" or temp[2] == "L3" or temp[2] == "L4":
             temp_str = temp[2]
             if num_one == 1:
                 return camarilla_levels(df)
+            
+        if temp[2] == "CPRPP" or temp[2] == "CPRBC" or temp[2] == "CPRTC" or temp[2] == "pivotR1" or temp[2] == "pivotR2" or temp[2] == "pivotR3" or temp[2] == "pivotR4" or temp[2] == "pivotS1" or temp[2] == "pivotS2" or temp[2] == "pivotS3" or temp[2] == "pivotS4":
+            temp_str = temp[2]
+            if num_one == 1:
+                return pivot_points_and_cpr(df)
 
     
 
@@ -315,51 +434,106 @@ def calculate_macd(df, fast_period=12, slow_period=26, signal_period=9, price_co
 
 
 
-def supertrend_generator(df, atr_length=10, factor=3.0):
-    # Define the column name dynamically
-    column_name = f'supertrend_{atr_length}_{factor}'
+# def supertrend_generator(df, atr_length=10, factor=3.0):
+#     # Define the column name dynamically
+#     column_name = f'supertrend_{atr_length}_{factor}'
     
-    # Calculate the True Range (TR)
-    df['tr1'] = df['high'] - df['low']
-    df['tr2'] = abs(df['high'] - df['close'].shift(1))
-    df['tr3'] = abs(df['low'] - df['close'].shift(1))
-    df['tr'] = df[['tr1', 'tr2', 'tr3']].max(axis=1)
+#     # Calculate the True Range (TR)
+#     df['tr1'] = df['high'] - df['low']
+#     df['tr2'] = abs(df['high'] - df['close'].shift(1))
+#     df['tr3'] = abs(df['low'] - df['close'].shift(1))
+#     df['tr'] = df[['tr1', 'tr2', 'tr3']].max(axis=1)
     
-    # Calculate the Average True Range (ATR)
-    df['atr'] = df['tr'].rolling(window=atr_length).mean()
+#     # Calculate the Average True Range (ATR)
+#     df['atr'] = df['tr'].rolling(window=atr_length).mean()
     
-    # Calculate the basic upper and lower bands
-    df['basic_upper'] = (df['high'] + df['low']) / 2 + factor * df['atr']
-    df['basic_lower'] = (df['high'] + df['low']) / 2 - factor * df['atr']
+#     # Calculate the basic upper and lower bands
+#     df['basic_upper'] = (df['high'] + df['low']) / 2 + factor * df['atr']
+#     df['basic_lower'] = (df['high'] + df['low']) / 2 - factor * df['atr']
     
-    # Initialize the SuperTrend and trend columns
-    df[column_name] = 0.0  # Use the dynamic column name
-    df['in_uptrend'] = True
+#     # Initialize the SuperTrend and trend columns
+#     df[column_name] = 0.0  # Use the dynamic column name
+#     df['in_uptrend'] = True
     
-    # Calculate SuperTrend
-    for i in range(1, len(df)):
-        if df.loc[df.index[i], 'close'] > df.loc[df.index[i-1], 'basic_upper']:
-            df.loc[df.index[i], 'in_uptrend'] = True
-        elif df.loc[df.index[i], 'close'] < df.loc[df.index[i-1], 'basic_lower']:
-            df.loc[df.index[i], 'in_uptrend'] = False
-        else:
-            df.loc[df.index[i], 'in_uptrend'] = df.loc[df.index[i-1], 'in_uptrend']
+#     # Calculate SuperTrend
+#     for i in range(1, len(df)):
+#         if df.loc[df.index[i], 'close'] > df.loc[df.index[i-1], 'basic_upper']:
+#             df.loc[df.index[i], 'in_uptrend'] = True
+#         elif df.loc[df.index[i], 'close'] < df.loc[df.index[i-1], 'basic_lower']:
+#             df.loc[df.index[i], 'in_uptrend'] = False
+#         else:
+#             df.loc[df.index[i], 'in_uptrend'] = df.loc[df.index[i-1], 'in_uptrend']
             
-            if df.loc[df.index[i], 'in_uptrend'] and df.loc[df.index[i], 'basic_lower'] < df.loc[df.index[i-1], 'basic_lower']:
-                df.loc[df.index[i], 'basic_lower'] = df.loc[df.index[i-1], 'basic_lower']
+#             if df.loc[df.index[i], 'in_uptrend'] and df.loc[df.index[i], 'basic_lower'] < df.loc[df.index[i-1], 'basic_lower']:
+#                 df.loc[df.index[i], 'basic_lower'] = df.loc[df.index[i-1], 'basic_lower']
             
-            if not df.loc[df.index[i], 'in_uptrend'] and df.loc[df.index[i], 'basic_upper'] > df.loc[df.index[i-1], 'basic_upper']:
-                df.loc[df.index[i], 'basic_upper'] = df.loc[df.index[i-1], 'basic_upper']
+#             if not df.loc[df.index[i], 'in_uptrend'] and df.loc[df.index[i], 'basic_upper'] > df.loc[df.index[i-1], 'basic_upper']:
+#                 df.loc[df.index[i], 'basic_upper'] = df.loc[df.index[i-1], 'basic_upper']
         
-        if df.loc[df.index[i], 'in_uptrend']:
-            df.loc[df.index[i], column_name] = df.loc[df.index[i], 'basic_lower']
+#         if df.loc[df.index[i], 'in_uptrend']:
+#             df.loc[df.index[i], column_name] = df.loc[df.index[i], 'basic_lower']
+#         else:
+#             df.loc[df.index[i], column_name] = df.loc[df.index[i], 'basic_upper']
+    
+#     # Drop intermediate columns
+#     df.drop(columns=['tr1', 'tr2', 'tr3', 'tr', 'atr', 'basic_upper', 'basic_lower', 'in_uptrend'], inplace=True)
+    
+#     return df
+
+def supertrend_generator(df, atr_length=10, factor=3.0):
+    """
+    Adds a SuperTrend indicator column (name: supertrend_{atr_length}_{factor}) to a copy of df.
+    Only requires columns 'high', 'low', 'close'.
+    """
+    df = df.copy()
+    column_name = f'supertrend_{atr_length}_{factor}'
+
+    # True Range (TR)
+    df['tr1'] = df['high'] - df['low']
+    df['tr2'] = (df['high'] - df['close'].shift(1)).abs()
+    df['tr3'] = (df['low'] - df['close'].shift(1)).abs()
+    df['tr'] = df[['tr1', 'tr2', 'tr3']].max(axis=1)
+
+    # Average True Range (ATR)
+    df['atr'] = df['tr'].rolling(window=atr_length, min_periods=1).mean()
+
+    # Basic Bands
+    hl2 = (df['high'] + df['low']) / 2
+    df['basic_upper'] = hl2 + factor * df['atr']
+    df['basic_lower'] = hl2 - factor * df['atr']
+
+    # Prepare arrays for speed
+    close = df['close'].values
+    basic_upper = df['basic_upper'].values
+    basic_lower = df['basic_lower'].values
+
+    supertrend = np.full_like(close, np.nan, dtype=float)
+    in_uptrend = np.ones_like(close, dtype=bool)
+
+    # First row: by default trend True (as in your code)
+    for i in range(1, len(df)):
+        if close[i] > basic_upper[i-1]:
+            in_uptrend[i] = True
+        elif close[i] < basic_lower[i-1]:
+            in_uptrend[i] = False
         else:
-            df.loc[df.index[i], column_name] = df.loc[df.index[i], 'basic_upper']
-    
+            in_uptrend[i] = in_uptrend[i-1]
+            if in_uptrend[i] and basic_lower[i] < basic_lower[i-1]:
+                basic_lower[i] = basic_lower[i-1]
+            if not in_uptrend[i] and basic_upper[i] > basic_upper[i-1]:
+                basic_upper[i] = basic_upper[i-1]
+
+        # Set supertrend value
+        supertrend[i] = basic_lower[i] if in_uptrend[i] else basic_upper[i]
+
+    # Assign outputs
+    df[column_name] = supertrend
+
     # Drop intermediate columns
-    df.drop(columns=['tr1', 'tr2', 'tr3', 'tr', 'atr', 'basic_upper', 'basic_lower', 'in_uptrend'], inplace=True)
-    
+    df.drop(columns=['tr1', 'tr2', 'tr3', 'tr', 'atr', 'basic_upper', 'basic_lower'], inplace=True)
+
     return df
+
 
 def camarilla_levels(df):
     
@@ -401,24 +575,24 @@ def pivot_points_and_cpr(df):
     df['prev_close'] = df['close'].shift(1)
     
     # Calculate Pivot Points (PP)
-    df['CPR_PP'] = (df['prev_high'] + df['prev_low'] + df['prev_close']) / 3
+    df['CPRPP'] = (df['prev_high'] + df['prev_low'] + df['prev_close']) / 3
     
     # Calculate CPR Levels
-    df['CPR_BC'] = (df['prev_high'] + df['prev_low']) / 2  # Central Pivot (BC)
-    df['CPR_TC'] = 2 * df['CPR_PP'] - df['CPR_BC']         # Central Target (TC)
+    df['CPRBC'] = (df['prev_high'] + df['prev_low']) / 2  # Central Pivot (BC)
+    df['CPRTC'] = 2 * df['CPRPP'] - df['CPRBC']         # Central Target (TC)
     
     # Calculate Support/Resistance Levels
     prev_range = df['prev_high'] - df['prev_low']
     
-    df['pivot_R1'] = 2 * df['CPR_PP'] - df['prev_low']
-    df['pivot_R2'] = df['CPR_PP'] + prev_range
-    df['pivot_R3'] = df['prev_high'] + 2 * (df['CPR_PP'] - df['prev_low'])
-    df['pivot_R4'] = df['pivot_R3'] + prev_range  # New R4 level
+    df['pivotR1'] = 2 * df['CPRPP'] - df['prev_low']
+    df['pivotR2'] = df['CPRPP'] + prev_range
+    df['pivotR3'] = df['prev_high'] + 2 * (df['CPRPP'] - df['prev_low'])
+    df['pivotR4'] = df['pivotR3'] + prev_range  # New R4 level
     
-    df['pivot_S1'] = 2 * df['CPR_PP'] - df['prev_high']
-    df['pivot_S2'] = df['CPR_PP'] - prev_range
-    df['pivot_S3'] = df['prev_low'] - 2 * (df['prev_high'] - df['CPR_PP'])
-    df['pivot_S4'] = df['pivot_S3'] - prev_range  # New S4 level
+    df['pivotS1'] = 2 * df['CPRPP'] - df['prev_high']
+    df['pivotS2'] = df['CPRPP'] - prev_range
+    df['pivotS3'] = df['prev_low'] - 2 * (df['prev_high'] - df['CPRPP'])
+    df['pivotS4'] = df['pivotS3'] - prev_range  # New S4 level
     
     # Cleanup intermediate columns
     df.drop(columns=['prev_high', 'prev_low', 'prev_close'], inplace=True)
@@ -651,4 +825,289 @@ def parabolicSAR_generator(df, start=0.02, increment=0.02, max_value=0.2):
     return df
 
 
+def stochastic_RSI(df, k=3, d=3, RSI_length=14, stochastic_length=14, RSI_sourse="close"):
+    column_name_K = f"stochasticRSIK_{k}_{d}_{RSI_length}_{stochastic_length}_{RSI_sourse}"
+    column_name_D = f"stochasticRSID_{k}_{d}_{RSI_length}_{stochastic_length}_{RSI_sourse}"
 
+    # Step 1: Calculate RSI
+    delta = df[RSI_sourse].diff()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+
+    avg_gain = gain.rolling(RSI_length).mean()
+    avg_loss = loss.rolling(RSI_length).mean()
+
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+
+    # Step 2: Stochastic of RSI
+    rsi_min = rsi.rolling(stochastic_length).min()
+    rsi_max = rsi.rolling(stochastic_length).max()
+
+    stoch_rsi = ((rsi - rsi_min) / (rsi_max - rsi_min)) * 100
+
+    # Step 3: Smooth K and D
+    K = stoch_rsi.rolling(k).mean()
+    D = K.rolling(d).mean()
+
+    # Save to DataFrame
+    df[column_name_K] = K
+    df[column_name_D] = D
+
+    return df
+
+
+def Ichimoku_cloud(df, CONVERSION_LINE_LENGTH=9, BASE_LINE_LENGTH=26, LEADING_SPAN_B_LENGTH=52, LAGGING_SPAN=26):
+    column_conversion_line = f"conversionLineIC_{CONVERSION_LINE_LENGTH}_{BASE_LINE_LENGTH}_{LEADING_SPAN_B_LENGTH}_{LAGGING_SPAN}"
+    column_base_line = f"baseLineIC_{CONVERSION_LINE_LENGTH}_{BASE_LINE_LENGTH}_{LEADING_SPAN_B_LENGTH}_{LAGGING_SPAN}"
+    column_lagging_line = f"laggingLineIC_{CONVERSION_LINE_LENGTH}_{BASE_LINE_LENGTH}_{LEADING_SPAN_B_LENGTH}_{LAGGING_SPAN}"
+    column_leading_span_a = f"leadingSpanAIC_{CONVERSION_LINE_LENGTH}_{BASE_LINE_LENGTH}_{LEADING_SPAN_B_LENGTH}_{LAGGING_SPAN}"
+    column_leading_span_b = f"leadingSpanBIC_{CONVERSION_LINE_LENGTH}_{BASE_LINE_LENGTH}_{LEADING_SPAN_B_LENGTH}_{LAGGING_SPAN}"
+
+    # Conversion Line (Tenkan-sen): (9-period high + 9-period low) / 2
+    high_conv = df['high'].rolling(window=CONVERSION_LINE_LENGTH).max()
+    low_conv = df['low'].rolling(window=CONVERSION_LINE_LENGTH).min()
+    df[column_conversion_line] = (high_conv + low_conv) / 2
+
+    # Base Line (Kijun-sen): (26-period high + 26-period low) / 2
+    high_base = df['high'].rolling(window=BASE_LINE_LENGTH).max()
+    low_base = df['low'].rolling(window=BASE_LINE_LENGTH).min()
+    df[column_base_line] = (high_base + low_base) / 2
+
+    # Leading Span A (Senkou Span A): (Conversion Line + Base Line) / 2 shifted forward
+    df[column_leading_span_a] = ((df[column_conversion_line] + df[column_base_line]) / 2).shift(LAGGING_SPAN)
+
+    # Leading Span B (Senkou Span B): (52-period high + 52-period low) / 2 shifted forward
+    high_span_b = df['high'].rolling(window=LEADING_SPAN_B_LENGTH).max()
+    low_span_b = df['low'].rolling(window=LEADING_SPAN_B_LENGTH).min()
+    df[column_leading_span_b] = ((high_span_b + low_span_b) / 2).shift(LAGGING_SPAN)
+
+    # Lagging Span (Chikou Span): closing price shifted backward
+    df[column_lagging_line] = df['close'].shift(-LAGGING_SPAN)
+
+    return df
+
+#_______________________________________________________________
+
+def momentum_indicator(df, period=10, source = "close"):
+    df[f"momentum_{period}_{source}"] = df[source] - df[source].shift(period)
+    return df
+
+def rate_of_change(df, period=9, source="close"):
+    if source not in df.columns:
+        raise ValueError(f"Invalid source '{source}'. Must be one of: {list(df.columns)}")
+
+    roc_col = f"roc_{period}_{source}"
+    df[roc_col] = ((df[source] - df[source].shift(period)) / df[source].shift(period)) * 100
+    return df
+
+
+def cci_indicator(df, period=20,  source="hlc"):
+    constant=0.015
+
+    if source == "hlc":
+        tp = (df['high'] + df['low'] + df['close']) / 3
+    elif source == "hl":
+        tp = (df['high'] + df['low'] ) / 2
+    elif source == "ohlc":
+        tp = (df['high'] + df['low'] + df['close'] + df['open']) / 4
+    elif source == "hlcc":
+        tp = (df['high'] + df['low'] + df['close'] + df['close']) / 4
+    elif source == "open":
+        tp = df['open']
+    elif source == "high":
+        tp = df['high']
+    elif source == "low":
+        tp = df['low']
+    elif source == "close":
+        tp = df['close']
+
+    sma_tp = tp.rolling(window=period).mean()
+    mean_dev = tp.rolling(window=period).apply(lambda x: (abs(x - x.mean())).mean(), raw=True)
+    df[f"cci_{period}_{source}"] = (tp - sma_tp) / (constant * mean_dev)
+    return df
+
+
+def williams_r(df, period=14, source="close"):
+    highest_high = df['high'].rolling(window=period).max()
+    lowest_low = df['low'].rolling(window=period).min()
+    
+    if source not in df.columns:
+        raise ValueError(f"Invalid source '{source}'. Must be one of: {list(df.columns)}")
+    
+    df[f"williamsPercentR_{period}_{source}"] = ((highest_high - df[source]) / (highest_high - lowest_low)) * -100
+    return df
+
+
+def chande_momentum_oscillator(df, period=14, source="close"):
+    delta = df[source].diff()
+    up = delta.where(delta > 0, 0).rolling(window=period).sum()
+    down = -delta.where(delta < 0, 0).rolling(window=period).sum()
+    df[f"cmo_{period}_{source}"] = 100 * ((up - down) / (up + down))
+    return df
+
+
+# getting wrong answer
+def on_balance_volume_with_smoothing(df, ma_type="None", ma_length=14, bb_mult=2.0):
+    if not {'close', 'volume'}.issubset(df.columns):
+        raise ValueError("DataFrame must contain 'close' and 'volume' columns.")
+
+    # Step 1: Calculate OBV
+    direction = np.sign(df['close'].diff()).fillna(0)
+    volume = df['volume'].fillna(0)
+    df["obv"] = (direction * volume).cumsum()
+
+    # Step 2: Optional MA smoothing
+    obv_ma_col = f"obv_{ma_type.lower()}_{ma_length}" if ma_type != "None" else None
+    if ma_type == "SMA":
+        df[obv_ma_col] = df['obv'].rolling(ma_length).mean()
+    elif ma_type == "EMA":
+        df[obv_ma_col] = df['obv'].ewm(span=ma_length, adjust=False).mean()
+    elif ma_type == "SMMA" or ma_type == "RMA":
+        df[obv_ma_col] = df['obv'].ewm(alpha=1/ma_length, adjust=False).mean()
+    elif ma_type == "WMA":
+        weights = np.arange(1, ma_length + 1)
+        df[obv_ma_col] = df['obv'].rolling(ma_length).apply(
+            lambda x: np.dot(x, weights)/weights.sum(), raw=True)
+    elif ma_type == "VWMA":
+        df[obv_ma_col] = (
+            (df['obv'] * df['volume']).rolling(ma_length).sum() /
+            df['volume'].rolling(ma_length).sum()
+        )
+    elif ma_type == "SMA + BB":
+        sma = df['obv'].rolling(ma_length).mean()
+        std = df['obv'].rolling(ma_length).std()
+        df[obv_ma_col] = sma
+        df[f"{obv_ma_col}_bb_upper"] = sma + bb_mult * std
+        df[f"{obv_ma_col}_bb_lower"] = sma - bb_mult * std
+    elif ma_type != "None":
+        raise ValueError(f"Unsupported MA type: {ma_type}")
+
+    return df
+
+# getting wrong answer
+def accumulation_distribution(df):
+    ad_col = "accumdist"
+
+    # Prevent divide-by-zero and apply condition logic from Pine Script
+    cond = ((df['close'] == df['high']) & (df['close'] == df['low'])) | (df['high'] == df['low'])
+    mfm = np.where(cond, 0, ((2 * df['close'] - df['low'] - df['high']) / (df['high'] - df['low'])))
+    mfm = np.nan_to_num(mfm)  # ensure NaNs or infs are replaced with 0
+
+    mfv = mfm * df['volume']
+    df[ad_col] = mfv.cumsum()
+
+    return df
+
+
+def chaikin_money_flow(df, period=20):
+    cmf_col = f"cmf_{period}"
+
+    mfm = ((df['close'] - df['low']) - (df['high'] - df['close'])) / (df['high'] - df['low'])
+    mfm = mfm.replace([float('inf'), -float('inf')], 0).fillna(0)
+    mfv = mfm * df['volume']
+
+    cmf = mfv.rolling(window=period).sum() / df['volume'].rolling(window=period).sum()
+    df[cmf_col] = cmf
+
+    return df
+
+def donchian_channels(df, period=20):
+    upper_col = f"donchianUpper_{period}"
+    lower_col = f"donchianLower_{period}"
+    mid_col = f"donchianMiddle_{period}"
+
+    df[upper_col] = df['high'].rolling(window=period).max()
+    df[lower_col] = df['low'].rolling(window=period).min()
+    df[mid_col] = (df[upper_col] + df[lower_col]) / 2
+
+    return df
+
+
+def keltner_channels(df, period=20, multiplier=2.0 ):
+    basis_col = f"keltnerBasis_{period}_{multiplier}"
+    upper_col = f"keltnerUpper_{period}_{multiplier}"
+    lower_col = f"keltnerLower_{period}_{multiplier}"
+
+    # Calculate EMA of close
+    df[basis_col] = df['close'].ewm(span=period, adjust=False).mean()
+
+    # True Range
+    high_low = df['high'] - df['low']
+    high_close_prev = (df['high'] - df['close'].shift()).abs()
+    low_close_prev = (df['low'] - df['close'].shift()).abs()
+    tr = pd.concat([high_low, high_close_prev, low_close_prev], axis=1).max(axis=1)
+
+    atr = tr.rolling(window=period).mean()  # Simple Moving Average ATR like in TradingView
+
+    df[upper_col] = df[basis_col] + multiplier * atr
+    df[lower_col] = df[basis_col] - multiplier * atr
+
+    return df
+
+# getting wrong answer
+def zigzag_enhanced(df, depth=10, deviation=5.0, 
+                    price_change_type="absolute",  # or "percent" absolute
+                    extend_to_last_bar=True,
+                    record_volume=True,
+                    record_price=True):
+    highs = df['high'].values
+    lows = df['low'].values
+    volumes = df['volume'].values
+    closes = df['close'].values
+
+    zz_vals = [np.nan] * len(df)
+    zz_changes = [np.nan] * len(df)
+    zz_volume = [np.nan] * len(df)
+
+    last_pivot_idx = None
+    last_pivot_value = None
+
+    for i in range(depth, len(df) - depth):
+        high_window = highs[i - depth:i + 1]
+        low_window = lows[i - depth:i + 1]
+        current_high = highs[i]
+        current_low = lows[i]
+
+        is_pivot_high = current_high == high_window.max()
+        is_pivot_low = current_low == low_window.min()
+
+        if is_pivot_high:
+            if last_pivot_value is None or current_high >= last_pivot_value * (1 + deviation / 100):
+                zz_vals[i] = current_high
+                if record_price:
+                    if last_pivot_value is not None:
+                        change = current_high - last_pivot_value
+                        if price_change_type == "percent":
+                            change = (change / last_pivot_value) * 100
+                        zz_changes[i] = change
+                if record_volume and last_pivot_idx is not None:
+                    zz_volume[i] = volumes[last_pivot_idx + 1:i + 1].sum()
+                last_pivot_idx = i
+                last_pivot_value = current_high
+
+        elif is_pivot_low:
+            if last_pivot_value is None or current_low <= last_pivot_value * (1 - deviation / 100):
+                zz_vals[i] = current_low
+                if record_price:
+                    if last_pivot_value is not None:
+                        change = current_low - last_pivot_value
+                        if price_change_type == "percent":
+                            change = (change / last_pivot_value) * 100
+                        zz_changes[i] = change
+                if record_volume and last_pivot_idx is not None:
+                    zz_volume[i] = volumes[last_pivot_idx + 1:i + 1].sum()
+                last_pivot_idx = i
+                last_pivot_value = current_low
+
+    # Extend to last bar (hold last pivot value if enabled)
+    if extend_to_last_bar and last_pivot_idx is not None:
+        zz_vals[-1] = last_pivot_value
+
+    df[f'zigzag_{depth}_{deviation}'] = zz_vals
+    if record_price:
+        df[f'zz_change_{price_change_type}'] = zz_changes
+    if record_volume:
+        df[f'zz_cum_volume'] = zz_volume
+
+    return df

@@ -20,7 +20,8 @@ class Equation(BaseModel):
     created: datetime = datetime.strptime(datetime.now(pytz.timezone("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S")
     # email: str
     isPrivate : bool = False
-    user_email : Optional[str] = None
+    tradeMode : str = "entry_exit_backtest"
+    # user_email : Optional[str] = None
 
 
 # _______________________________________
@@ -82,6 +83,7 @@ class LinkGetOutput(BaseModel):
     isPrivate : bool
     likes : int
     dislikes : int
+    tradeMode : str = "entry_exit_backtest"
     model_config = {
         "populate_by_name": True  # Allows aliasing to work
     }

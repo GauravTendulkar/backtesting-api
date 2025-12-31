@@ -1,81 +1,122 @@
+# routes/social_user_role_change.py
 from fastapi import APIRouter, HTTPException, Body, Query
+from bson import ObjectId
 from database import configurations
-from bson import ObjectId, Regex
-from database import configurations
-from datetime import datetime, timedelta
+from datetime import datetime
+from pymongo import DESCENDING
+from typing import Optional
+from datetime import datetime
 
 
 admin_dashboard_social_role_change = APIRouter()
 
-# @admin_dashboard_social_role_change.get("/get-all-users")
-# async def get_all_users():
-#     users = list(configurations.collection_social_user.find())
-#     for u in users:
-#         u["_id"] = str(u["_id"])
-#     return users
-
 
 @admin_dashboard_social_role_change.get("/get-all-users")
 async def get_all_users(
-    search: str = Query(default="", alias="search"),
-    role: str = Query(default=""),
-    date_filter: str = Query(default="all"),
-    page: int = Query(default=1, ge=1),
-    limit: int = Query(default=5, ge=1, le=100),
+    page: int = Query(1),
+    limit: int = Query(10),
+    filter: str = Query("all"),
+    role: str = Query(None)
 ):
+    skip = (page - 1) * limit
     query = {}
 
-    if search:
-        regex = {"$regex": search, "$options": "i"}
-        query["$or"] = [{"full_name": regex}, {"email": regex}]
-
-    if role == "none":
+    if filter == "with":
+        query["roles.0"] = {"$exists": True}
+    elif filter == "without":
         query["$or"] = [{"roles": {"$exists": False}}, {"roles": {"$size": 0}}]
-    elif role:
-        query["roles"] = role
 
+    if role:
+        query["roles.name"] = role
 
-    if date_filter in ["recent", "older"]:
-        cutoff_date = datetime.utcnow() - timedelta(days=30)
-        if date_filter == "recent":
-            query["account_created"] = {"$gte": cutoff_date}
-        else:
-            query["account_created"] = {"$lt": cutoff_date}
+    total_users = configurations.collection_social_user.count_documents(query)
+    users_cursor = configurations.collection_social_user.find(query).skip(skip).limit(limit)
 
-    total_count = configurations.collection_social_user.count_documents(query)
-    total_pages = (total_count + limit - 1) // limit
-
-    users = list(
-        configurations.collection_social_user.find(query)
-        .sort("account_created", -1)
-        .skip((page - 1) * limit)
-        .limit(limit)
-    )
-
-    for u in users:
-        u["_id"] = str(u["_id"])
+    users = []
+    for user in users_cursor:
+        user["_id"] = str(user["_id"])
+        if "roles" in user:
+            for role in user["roles"]:
+                role["start_date"] = role["start_date"].isoformat()
+                role["end_date"] = role["end_date"].isoformat()
+        users.append(user)
 
     return {
         "users": users,
-        "total_pages": total_pages,
+        "total": total_users
     }
 
+
+
 @admin_dashboard_social_role_change.post("/add-role-to-user")
-async def add_role_to_user(user_id: str = Body(...), role: str = Body(...)):
+async def add_role_to_user(
+    user_id: str = Body(...),
+    name: str = Body(...),
+    start_date: str = Body(...),
+    end_date: str = Body(...),
+    limit: str = Body(...),
+):
+    role_data = {
+        "name": name,
+        "start_date": datetime.fromisoformat(start_date),
+        "end_date": datetime.fromisoformat(end_date),
+        "limit": limit,
+    }
     result = configurations.collection_social_user.update_one(
         {"_id": ObjectId(user_id)},
-        {"$addToSet": {"roles": role}},
+        {"$addToSet": {"roles": role_data}},
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "Role added"}
 
+
 @admin_dashboard_social_role_change.post("/remove-role-from-user")
-async def remove_role_from_user(user_id: str = Body(...), role: str = Body(...)):
+async def remove_role_from_user(user_id: str = Body(...), role_name: str = Body(...)):
     result = configurations.collection_social_user.update_one(
         {"_id": ObjectId(user_id)},
-        {"$pull": {"roles": role}},
+        {"$pull": {"roles": {"name": role_name}}},
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "Role removed"}
+
+
+@admin_dashboard_social_role_change.post("/update-role-dates")
+async def update_role_dates(
+    user_id: str = Body(...),
+    name: str = Body(...),
+    start_date: str = Body(...),
+    end_date: str = Body(...),
+    limit: str = Body(...)
+):
+    try:
+        user = configurations.collection_social_user.find_one({"_id": ObjectId(user_id)})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        updated_roles = []
+        found = False
+        for role in user.get("roles", []):
+            if role["name"] == name:
+                updated_roles.append({
+                    "name": name,
+                    "start_date": datetime.fromisoformat(start_date),
+                    "end_date": datetime.fromisoformat(end_date),
+                    "limit": limit
+                })
+                found = True
+            else:
+                updated_roles.append(role)
+
+        if not found:
+            raise HTTPException(status_code=404, detail="Role not found")
+
+        configurations.collection_social_user.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"roles": updated_roles}}
+        )
+        return {"message": "Role updated successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
