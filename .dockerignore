@@ -25,3 +25,22 @@ indicator_process/fast_cache/*.parquet
 
 fastCache_file_tracking.csv
 stock_column_file_tracking.csv
+
+
+functions_duckdb/indicator_files/*.parquet
+fastCache_duckdb.*
+indicator_process_duckdb/*
+fastCache_duckdb/*
+
+*/*.duckdb 
+*.duckdb
+*/*.sqlite
+*.sqlite
+
+database_duckdb/*
+
+w_db_assignments.json
+*.csv
+
+Clean_data/1min copy/*
+Clean_data/RAW_daily_data_tradingview copy/*

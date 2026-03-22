@@ -263,6 +263,8 @@ def duckdb_condition_scanner_1(data, date_ranges):
     
     print(data['dateRange'], data['dateRange']['from'], data['dateRange']['to']) 
 
+    print(fast_cache_dict.keys())
+    print(fast_cache_dict)
     initial_time = time.perf_counter()
     # newText = return_main("INFY", 15, data['dateRange']['from'], data['dateRange']['to'])
     # OUTPUT = pd.DataFrame()
@@ -356,11 +358,11 @@ def duckdb_condition_scanner_1(data, date_ranges):
     
     # json_data, max_stocks = convert_df_to_json_and_maxstocks(Tracking)
     # print("Max stocks at single timestamp:", max_stocks)
-    elapsed_time = time.perf_counter() - initial_time
-    print(elapsed_time)
-    print(f"Elapsed time: {elapsed_time * 1_000:.2f} ms")   # Microseconds
-    print(f"Elapsed time: {elapsed_time * 1_000_000:.2f} µs")   # Microseconds
-    print(f"Elapsed time: {elapsed_time * 1_000_000_000:.2f} ns")  # Nanoseconds
+    # elapsed_time = time.perf_counter() - initial_time
+    # print(elapsed_time)
+    # print(f"Elapsed time: {elapsed_time * 1_000:.2f} ms")   # Microseconds
+    # print(f"Elapsed time: {elapsed_time * 1_000_000:.2f} µs")   # Microseconds
+    # print(f"Elapsed time: {elapsed_time * 1_000_000_000:.2f} ns")  # Nanoseconds
     
     # # return {"data_result":Tracking.to_json(orient='records')}
     # return {"data_result": data_compression.compress_json_for_frontend(json_data), "max_length" : max_stocks}

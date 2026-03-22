@@ -596,3 +596,136 @@ def run_once_combined():
 
 # from functions import newData_concat
 # run_once_combined()
+
+
+
+def list_files_new_data(folder_path):
+    """Returns a list of files in the given folder."""
+    path = Path(folder_path)
+    if not path.exists():
+        return f"Error: The folder '{folder_path}' does not exist."
+    files = [file.name for file in path.iterdir() if file.is_file()]
+    # print(files)
+    one_min_tf = []
+    daily_tf = []
+    for i in range(0, len(files)):
+        extension = ""
+        if ".csv" in files[i]:
+            extension = "csv"
+        elif ".parquet" in files[i]:
+            extension = "parquet"
+
+        if "1min" in files[i]:
+            one_min_tf.append({"tf" : "1min", "stock" : files[i][0 : files[i].find("_1min")], "extension" : extension})
+        elif "Daily" in files[i]:
+            daily_tf.append({"tf" : "Daily", "stock" : files[i][0 : files[i].find("_Daily")], "extension" : extension})
+    
+    # files = [file for file in files if "1min" in file]
+
+    return one_min_tf, daily_tf
+
+import duckdb
+import pandas as pd
+
+def run_once_combined_duckdb_helper(stock, 
+                                    tf = "1min", 
+                                    extension_old = "parquet",
+                                    extension_new = "parquet", 
+                                    extension_output = "parquet",
+                                     conn = duckdb.connect()):
+
+    if stock is None:
+        return None
+
+
+    if tf == "1min":
+        path_old = f"Clean_data/1min/{stock}_1min.{extension_old}"
+        path_new = f"Clean_data/newData/{stock}_1min.{extension_new}"
+    elif tf == "Daily":
+        path_old = f"Clean_data/RAW_daily_data_tradingview/{stock}_Daily.{extension_old}"
+        path_new = f"Clean_data/newData/{stock}_Daily.{extension_new}"
+    try:
+        df_old = conn.execute(f""" 
+        SELECT * FROM 
+        "{path_old}"
+        """).df()
+    except:
+        df_old = pd.DataFrame()
+    try:
+        df_new = conn.execute(f""" 
+        SELECT * FROM 
+        "{path_new}"
+        """).df()
+    except:
+        df_new = pd.DataFrame()
+
+    df_concat = pd.concat([ df_old, df_new])
+
+    if len(df_concat) > 0:
+        query = """ 
+    SELECT DISTINCT ON (datetime) *
+        FROM df_concat
+        ORDER BY datetime
+        """
+        # df_output = conn.execute("""
+        
+        # """).df()
+        if tf == "1min":
+            path_old = f"Clean_data/1min/{stock}_1min.{extension_output}"
+            
+        elif tf == "Daily":
+            path_old = f"Clean_data/RAW_daily_data_tradingview/{stock}_Daily.{extension_output}"
+            
+            
+        if extension_output == "csv":
+            conn.execute(f"COPY ({query}) TO '{path_old}' (HEADER, DELIMITER ',');")
+        elif extension_output == "parquet":
+            conn.execute(f"COPY ({query}) TO '{path_old}' (FORMAT PARQUET);")
+
+# print(len(df_output))
+# df_output
+def run_once_combined_duckdb():
+    stock_list_1min, stock_list_Daily  = list_files_new_data("Clean_data/newData")
+    print(stock_list_1min)
+    print(stock_list_Daily)
+    conn = duckdb.connect()
+
+    if len(stock_list_1min) == 0:
+        print("No files found in the directory for 1min.")
+    else:
+        stock_old_data_1min_cache = {}
+        stock_old_data_1min, _  = list_files_new_data("Clean_data/1min")
+        for i, item in enumerate(stock_old_data_1min):
+            stock_old_data_1min_cache[item["stock"]] = item
+
+        for i, item in enumerate(stock_list_1min):
+            extension_old =  "csv"
+            if item["stock"] in stock_old_data_1min_cache:
+                extension_old = stock_old_data_1min_cache[item["stock"]]["extension"]
+
+            run_once_combined_duckdb_helper(item["stock"], 
+                                            tf = "1min", 
+                                            extension_old = extension_old,
+                                            extension_new = item["extension"], 
+                                            extension_output = "parquet",
+                                            conn = conn)
+    if len(stock_list_Daily) == 0:
+        print("No files found in the directory for Daily.")
+        
+    else:
+        stock_old_data_Daily_cache = {}
+        _ , stock_old_data_Daily  = list_files_new_data("Clean_data/RAW_daily_data_tradingview")
+        for i, item in enumerate(stock_old_data_Daily):
+            stock_old_data_Daily_cache[item["stock"]] = item
+
+        for i, item in enumerate(stock_list_Daily):
+            extension_old =  "csv"
+            if item["stock"] in stock_old_data_Daily_cache:
+                extension_old = stock_old_data_Daily_cache[item["stock"]]["extension"]
+    
+            run_once_combined_duckdb_helper(item["stock"], 
+                                            tf = "Daily", 
+                                            extension_old = extension_old,
+                                            extension_new = item["extension"], 
+                                            extension_output = "parquet",
+                                            conn = conn)

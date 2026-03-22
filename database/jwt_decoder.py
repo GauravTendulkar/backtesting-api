@@ -27,6 +27,7 @@ def get_current_user(authorization: str = Header(...)):
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
+        return None
         raise HTTPException(status_code=400, detail="Invalid token")
 
 # @app.post("/protected-endpoint")

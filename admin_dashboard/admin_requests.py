@@ -26,6 +26,12 @@ from fastapi import APIRouter
 from bson import ObjectId
 from datetime import datetime, timezone
 
+import os
+import shutil
+import aiofiles
+from fastapi import APIRouter, UploadFile, File, Form
+from typing import List
+
 admin_dashboard = APIRouter()
 
 
@@ -117,6 +123,8 @@ async def get_user_permissions(user_email=Depends(jwt_decoder.get_current_user))
     permissions = getRoles(roles_data)
     print("Final permissions:", permissions)
     return permissions
+
+    
 #     return ["createScan.run", 
 # "admin-dashboard", 
 # "admin-dashboard.upload", 
@@ -131,30 +139,76 @@ async def get_user_permissions(user_email=Depends(jwt_decoder.get_current_user))
 
 #____________________________________________________________________________
 
-data_list = ["Clean_data/newData", "Clean_data/1min", "Clean_data/RAW_daily_data_tradingview", "indicator_process", "fastCache"]
+data_list = ["Clean_data/newData", "Clean_data/1min", "Clean_data/RAW_daily_data_tradingview", "indicator_process", "fastCache", "database_duckdb"]
 @admin_dashboard.get("/file-folder")
 async def upload_file_list():
     return data_list
-
+# --------------------------************************
 
 UPLOAD_DIR = "Clean_data/newData"
+TEMP_DIR = "Clean_data/temp_chunks"
 
+# admin_dashboard = APIRouter(prefix="/backend/api/admin-dashboard")
+
+# ─── Original multi-file upload (small files) ───────────────────────────────
 @admin_dashboard.post("/upload-new-data")
 async def upload_files(files: List[UploadFile] = File(...)):
-    if not os.path.exists(UPLOAD_DIR):
-        os.makedirs(UPLOAD_DIR)
-
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
     saved_files = []
-
     for file in files:
         file_location = os.path.join(UPLOAD_DIR, file.filename)
         with open(file_location, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         saved_files.append(file.filename)
-
     return {"message": "Files uploaded successfully", "files": saved_files}
 
 
+# ─── Chunked upload (large files) ────────────────────────────────────────────
+@admin_dashboard.post("/upload-chunk")
+async def upload_chunk(
+    file: UploadFile = File(...),
+    chunk_index: int = Form(...),
+    total_chunks: int = Form(...),
+    file_name: str = Form(...),
+):
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+    temp_dir = os.path.join(TEMP_DIR, file_name)
+    os.makedirs(temp_dir, exist_ok=True)
+
+    # Save this chunk
+    chunk_path = os.path.join(temp_dir, f"chunk_{chunk_index}")
+    async with aiofiles.open(chunk_path, "wb") as f:
+        while data := await file.read(1024 * 1024):  # 1MB read buffer
+            await f.write(data)
+
+    # If last chunk — reassemble
+    if chunk_index == total_chunks - 1:
+        final_path = os.path.join(UPLOAD_DIR, file_name)
+        async with aiofiles.open(final_path, "wb") as final_file:
+            for i in range(total_chunks):
+                chunk_file = os.path.join(temp_dir, f"chunk_{i}")
+                async with aiofiles.open(chunk_file, "rb") as cf:
+                    while data := await cf.read(1024 * 1024):
+                        await final_file.write(data)
+
+        shutil.rmtree(temp_dir)  # cleanup temp chunks
+        return {"status": "complete", "file": file_name}
+
+    return {"status": "chunk_received", "chunk": chunk_index, "total": total_chunks}
+
+
+# ─── Check if upload already partially done (resume support) ─────────────────
+@admin_dashboard.get("/upload-progress/{file_name}")
+async def get_upload_progress(file_name: str):
+    temp_dir = os.path.join(TEMP_DIR, file_name)
+    if not os.path.exists(temp_dir):
+        return {"uploaded_chunks": []}
+    chunks = os.listdir(temp_dir)
+    uploaded = [int(c.replace("chunk_", "")) for c in chunks if c.startswith("chunk_")]
+    return {"uploaded_chunks": sorted(uploaded)}
+
+# --------------------------------------------------------******************
 def get_file_names(folder_name):
     # List all files and directories in a path
     files = os.listdir(folder_name)  # Replace with your path
@@ -171,29 +225,30 @@ def get_file_names(folder_name):
         # print("a", a)
         
         if "csv" == a[1] or "parquet" == a[1] or "feather" == a[1] or "pickle" == a[1]:
-            if folder_name == "fastCache":
-                # print()
-                if len(a) < 3:
-                    df_clean = fastCache_saving.read_file(f"{folder_name}/{a[0]}", extension = f".{a[1]}")
-                    # temp["last_date"] = str(df_clean.index[-1])
-                    temp["last_date"] = int(df_clean.loc[df_clean.index[-1] ,"date_number"])
-                else:
-                    temp["last_date"] = 0
-            else:
-                if len(a) < 3:
-                    df_clean = df_saving.read_file(f"{folder_name}/{a[0]}", extension = f".{a[1]}")
-                    temp["last_date"] = str(df_clean.index[-1])
-                else:
-                    temp["last_date"] = 0
-                
+            # if folder_name == "fastCache":
+            #     # print()
+            #     if len(a) < 3:
+            #         df_clean = fastCache_saving.read_file(f"{folder_name}/{a[0]}", extension = f".{a[1]}")
+            #         # temp["last_date"] = str(df_clean.index[-1])
+            #         temp["last_date"] = int(df_clean.loc[df_clean.index[-1] ,"date_number"])
+            #     else:
+            #         temp["last_date"] = 0
+            # else:
+            #     if len(a) < 3:
+            #         df_clean = df_saving.read_file(f"{folder_name}/{a[0]}", extension = f".{a[1]}")
+            #         temp["last_date"] = str(df_clean.index[-1])
+            #     else:
+            #         temp["last_date"] = 0
+            temp["last_date"] = 0    
         else:
             temp["last_date"] = 0
         
 
         m_size = memory.sizeof_fmt(os.path.getsize(f"{folder_name}/{files[i]}"),  unit="Mi")
         m_size[0] = round(m_size[0],2)
+        # print(m_size)
         temp["file_size"] = m_size
-        
+        # temp["file_size"] = [0, 'MiB']
         files_details.append(temp)
 
     return files_details
@@ -204,6 +259,7 @@ class FolderName(BaseModel):
 @admin_dashboard.post("/get-new-data-name")
 async def get_upload_file_names(data : FolderName):
     # print(data.folder_name)
+    print(data)
     file_name = get_file_names(data.folder_name)
 
     return file_name
@@ -220,7 +276,8 @@ async def delete_upload_file_names(payload: FileDeleteRequest):
     for file_name in payload.files_list:
         try:
             os.remove(f"{payload.folder_name}/{file_name}")
-        except:
+        except Exception as e:
+            print(e)
             pass
     return {"status": "success"}
 
@@ -236,7 +293,9 @@ async def run_in_thread(func):
 async def delete_upload_file_names():
     
     try:
-        await run_in_thread(newData_concat.run_once_combined())
+        # await run_in_thread(newData_concat.run_once_combined())
+        await run_in_thread(newData_concat.run_once_combined_duckdb())
+        
         
     except:
         pass

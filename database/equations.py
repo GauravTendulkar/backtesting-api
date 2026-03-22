@@ -151,6 +151,9 @@ async def get_equations(page: int, noOfItems : int, user_email = Depends(jwt_dec
         else:
             # return {"page": total_no_of_pages, "items": equations_list, "total_no_of_pages" : total_no_of_pages}
             raise HTTPException(status_code=404, detail="Page Not Found")
+    else:
+            
+            raise HTTPException(status_code=404, detail="Page Not Found")
 
 class EmailRequest(BaseModel):
     user_email: Optional[str] = None

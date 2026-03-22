@@ -223,13 +223,19 @@ def check_stock_files_if_exists(stocks_list):
     temp_1min = []
     
     for i in range(0, len(files)):
-        temp_1min.append(files[i][:-9])
+        if ".csv" in files[i] :
+            temp_1min.append(files[i][:-9])
+        if ".parquet" in files[i] :
+            temp_1min.append(files[i][:-13])
     
     temp_Daily = []
     files = [f for f in os.listdir('Clean_data/RAW_daily_data_tradingview') if os.path.isfile(os.path.join('Clean_data/RAW_daily_data_tradingview', f))]
     files.remove('.gitkeep')
     for i in range(0, len(files)):
-        temp_Daily.append(files[i][:-10])
+        if ".csv" in files[i] :
+            temp_Daily.append(files[i][:-10])
+        if ".parquet" in files[i] :
+            temp_1min.append(files[i][:-14])
     
     for i in range(0, len(stocks_list)):
         
@@ -243,7 +249,6 @@ def check_stock_files_if_exists(stocks_list):
                 stocks_list_temp.append(stocks_list[i])
     
     return stocks_list_temp
-
 
 # l = ["INFY", "BAJAJ_AUTO"]
 # check_stock_files_if_exists(l)

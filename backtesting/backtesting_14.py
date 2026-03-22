@@ -66,7 +66,7 @@ def run_for_each_stock(date_start, date_end, entry, entryPrice, quantity, exitCo
     t = 0
     # print("pre_c_entry", entry)
     pre_c_entry = compile(entry, "<string>", "eval")
-    pre_c_entryPrice = compile(entryPrice, "<string>", "eval")
+    pre_c_entryPrice = compile(entryPrice, "<string>", "eval") 
     pre_c_quantity = compile(quantity, "<string>", "eval")
     pre_c_exitCollection = copy.deepcopy(exitCollection)
     for s in range(len(pre_c_exitCollection)):

@@ -480,6 +480,60 @@ def calculate_macd(df, fast_period=12, slow_period=26, signal_period=9, price_co
     
 #     return df
 
+# def supertrend_generator(df, atr_length=10, factor=3.0):
+#     """
+#     Adds a SuperTrend indicator column (name: supertrend_{atr_length}_{factor}) to a copy of df.
+#     Only requires columns 'high', 'low', 'close'.
+#     """
+#     df = df.copy()
+#     column_name = f'supertrend_{atr_length}_{factor}'
+
+#     # True Range (TR)
+#     df['tr1'] = df['high'] - df['low']
+#     df['tr2'] = (df['high'] - df['close'].shift(1)).abs()
+#     df['tr3'] = (df['low'] - df['close'].shift(1)).abs()
+#     df['tr'] = df[['tr1', 'tr2', 'tr3']].max(axis=1)
+
+#     # Average True Range (ATR)
+#     df['atr'] = df['tr'].rolling(window=atr_length, min_periods=1).mean()
+
+#     # Basic Bands
+#     hl2 = (df['high'] + df['low']) / 2
+#     df['basic_upper'] = hl2 + factor * df['atr']
+#     df['basic_lower'] = hl2 - factor * df['atr']
+
+#     # Prepare arrays for speed
+#     close = df['close'].values
+#     basic_upper = df['basic_upper'].values
+#     basic_lower = df['basic_lower'].values
+
+#     supertrend = np.full_like(close, np.nan, dtype=float)
+#     in_uptrend = np.ones_like(close, dtype=bool)
+
+#     # First row: by default trend True (as in your code)
+#     for i in range(1, len(df)):
+#         if close[i] > basic_upper[i-1]:
+#             in_uptrend[i] = True
+#         elif close[i] < basic_lower[i-1]:
+#             in_uptrend[i] = False
+#         else:
+#             in_uptrend[i] = in_uptrend[i-1]
+#             if in_uptrend[i] and basic_lower[i] < basic_lower[i-1]:
+#                 basic_lower[i] = basic_lower[i-1]
+#             if not in_uptrend[i] and basic_upper[i] > basic_upper[i-1]:
+#                 basic_upper[i] = basic_upper[i-1]
+
+#         # Set supertrend value
+#         supertrend[i] = basic_lower[i] if in_uptrend[i] else basic_upper[i]
+
+#     # Assign outputs
+#     df[column_name] = supertrend
+
+#     # Drop intermediate columns
+#     df.drop(columns=['tr1', 'tr2', 'tr3', 'tr', 'atr', 'basic_upper', 'basic_lower'], inplace=True)
+
+#     return df
+
 def supertrend_generator(df, atr_length=10, factor=3.0):
     """
     Adds a SuperTrend indicator column (name: supertrend_{atr_length}_{factor}) to a copy of df.
@@ -488,51 +542,15 @@ def supertrend_generator(df, atr_length=10, factor=3.0):
     df = df.copy()
     column_name = f'supertrend_{atr_length}_{factor}'
 
-    # True Range (TR)
-    df['tr1'] = df['high'] - df['low']
-    df['tr2'] = (df['high'] - df['close'].shift(1)).abs()
-    df['tr3'] = (df['low'] - df['close'].shift(1)).abs()
-    df['tr'] = df[['tr1', 'tr2', 'tr3']].max(axis=1)
-
-    # Average True Range (ATR)
-    df['atr'] = df['tr'].rolling(window=atr_length, min_periods=1).mean()
-
-    # Basic Bands
-    hl2 = (df['high'] + df['low']) / 2
-    df['basic_upper'] = hl2 + factor * df['atr']
-    df['basic_lower'] = hl2 - factor * df['atr']
-
-    # Prepare arrays for speed
-    close = df['close'].values
-    basic_upper = df['basic_upper'].values
-    basic_lower = df['basic_lower'].values
-
-    supertrend = np.full_like(close, np.nan, dtype=float)
-    in_uptrend = np.ones_like(close, dtype=bool)
-
-    # First row: by default trend True (as in your code)
-    for i in range(1, len(df)):
-        if close[i] > basic_upper[i-1]:
-            in_uptrend[i] = True
-        elif close[i] < basic_lower[i-1]:
-            in_uptrend[i] = False
-        else:
-            in_uptrend[i] = in_uptrend[i-1]
-            if in_uptrend[i] and basic_lower[i] < basic_lower[i-1]:
-                basic_lower[i] = basic_lower[i-1]
-            if not in_uptrend[i] and basic_upper[i] > basic_upper[i-1]:
-                basic_upper[i] = basic_upper[i-1]
-
-        # Set supertrend value
-        supertrend[i] = basic_lower[i] if in_uptrend[i] else basic_upper[i]
-
+    supertrend, direction = ta.supertrend(high= df["high"], low=df["low"], close= df["close"], period=atr_length, multiplier=factor)
     # Assign outputs
     df[column_name] = supertrend
 
     # Drop intermediate columns
-    df.drop(columns=['tr1', 'tr2', 'tr3', 'tr', 'atr', 'basic_upper', 'basic_lower'], inplace=True)
+    
 
     return df
+
 
 
 def camarilla_levels(df):

@@ -34,7 +34,7 @@ def entry_to_equation(temp, option, smallest):
         if "indicator" in i:
            
             indicator_arr, indicator_shortform = indicators.get_indicator_shortform(None, i["indicator"], 0)
-           
+            # print(indicator_arr, indicator_shortform)
             
             if if_index_exist(indicator_arr, [0]):
                 
@@ -46,7 +46,7 @@ def entry_to_equation(temp, option, smallest):
                 elif indicator_arr[0] == "time":
                     # temp_str += "float(Tracking.loc[Tracking.index[-1], 'entry'])"
                     # temp_str += "int(df_data[i][time_index]/100)"
-                    temp_str += "df_fastCache_colum_arr['time_int'][i]"
+                    temp_str += "df['time_int'][i]"
                 elif indicator_arr[0] == "countPrevTrades":
                     # temp_str += "functions.count_previous_entry_intraday(Tracking, int(df_data[i][date_index]))"
                     temp_str += "functions.count_previous_entry_intraday_1(date_number_array, int(df_data[i][date_index]))"
@@ -143,12 +143,13 @@ def entry_to_equation(temp, option, smallest):
                 or indicator_arr[2] == "datetime_number"):
 
                     
-                    stock = '{stock}'
-                    stock = f"{smallest}_{stock}_{indicator_arr[1]}_{indicator_arr[0]}_{indicator_shortform}"
-                    modified_string = f'f"{stock}"'
+                    # stock = f'{stock}'
+                    # stock = f"{smallest}_{stock}_{indicator_arr[1]}_{indicator_arr[0]}_{indicator_shortform}"
+                    stock = f"{smallest}_{indicator_arr[1]}_{indicator_arr[0]}_{indicator_shortform}"
+                    # modified_string = f'f"{stock}"'
                     # print(stock)
                         
-                    temp_str += f"df_fastCache_colum_arr[{modified_string}][i]"
+                    temp_str += f'df["{stock}"][i]'
                     
                         
             
@@ -168,26 +169,26 @@ def entry_to_equation(temp, option, smallest):
                     temp_str = temp_str + " " + option + " "
 
         elif "AND" in i:
-            print(option, len(temp))
+            # print(option, len(temp))
             if len(temp) == 1:
                 temp_str += f"( {entry_to_equation(i['AND'], 'and', smallest)} )"
             else:
                 temp_str = temp_str + f"( {entry_to_equation(i['AND'], 'and', smallest)} )"
                 index += 1
-                print("index_and", index_and)
+                # print("index_and", index_and)
                 
                 if index < len(temp):
                     temp_str = temp_str + " " + option + " "
-                    print(temp_str)
+                    # print(temp_str)
         elif "OR" in i:
-            print(option, len(temp))
+            # print(option, len(temp))
             if len(temp) == 1:
                 temp_str += f"( {entry_to_equation(i['OR'], 'or', smallest)} )"
             else:
                 
                 temp_str = temp_str + f"( {entry_to_equation(i['OR'], 'or', smallest)} )"
                 index += 1
-                print("index_or", index_or)
+                # print("index_or", index_or)
                 
                 
                 if index < len(temp):

@@ -29,8 +29,8 @@ from database.verifytoken import protected
 from admin_dashboard.user_role_manager import admin_dashboard_social_role_change
 from database.strategy_categories import strategy_categories
 from admin_dashboard.dateRange import date_range
-
-
+from contextlib import asynccontextmanager
+from functions_duckdb import workers
 
 def calculate_cpu():
 
@@ -49,6 +49,17 @@ def calculate_cpu():
         return num_cpus-2
     else :
         return num_cpus
+# create workers pool 
+# pool_of_process: workers.WorkerPool = None
+
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     global pool_of_process
+#     pool_of_process = workers.WorkerPool(num_workers=4)
+#     yield
+#     pool_of_process.shutdown()
+
+# app = FastAPI(lifespan=lifespan)
     
 
 app = FastAPI()
@@ -71,6 +82,8 @@ def create_dir():
     os.makedirs("Clean_data/RAW_daily_data_tradingview", exist_ok=True)
     os.makedirs("fastCache", exist_ok=True)
     os.makedirs("indicator_process", exist_ok=True)
+    os.makedirs("database_duckdb", exist_ok=True)
+    
     
 create_dir()
 
