@@ -347,51 +347,31 @@ def entry_to_equation(temp, option):
 #________________________________________________________________________
 #
 #
-avoid_indicators = ["H1", "H2","H3","H4", "L1", "L2","L3","L4"]
+avoid_indicators = ["H1", "H2","H3","H4", "L1", "L2","L3","L4", 
+                    "CPRPP", "CPRBC", "CPRTC", "pivotR1", "pivotR2", "pivotR3", "pivotR4", "pivotS1", "pivotS2", "pivotS3", "pivotS4"]
 #________________________________________________________________________
-def select_candles(stock, i, column, row, df, uniqueTime, tf, df_smallest,  smallest, smallestLastTime, candle):
+# def select_candles(stock, i, column, row, df, uniqueTime, tf, df_smallest,  smallest, smallestLastTime, candle):
     # print("candle out")
     # @njit
-    def select_candles_temp(stock, column, row, df, uniqueTime, tf, df_smallest, smallest, smallestLastTime,  candle):
-        
+def select_candles_temp(stock, column, row, df, uniqueTime, tf, df_smallest, smallest, smallestLastTime,  candle):
+    
 
-        if tf == "Monthly":
-            # print("Weekly", row)
-            # row = row // 10**6
-            return select_column_row_Monthly(column, row, df, df_smallest, smallest, candle)
-        elif tf == "Weekly":
-            # print("Weekly", row)
-            # row = row // 10**6
-            return select_column_row_Weekly(column, row, df, df_smallest, smallest, candle)
+    if tf == "Monthly":
+        # print("Weekly", row)
+        # row = row // 10**6
+        return select_column_row_Monthly(column, row, df, df_smallest, smallest, candle)
+    elif tf == "Weekly":
+        # print("Weekly", row)
+        # row = row // 10**6
+        return select_column_row_Weekly(column, row, df, df_smallest, smallest, candle)
+    
+    
+    
+    elif tf == "Daily":
         
-        
-        
-        elif tf == "Daily":
-            
-            # print("Daily", int(str(row)[8:]), smallestLastTime, int(str(row)[8:]) >= smallestLastTime)
-            if candle == 0:
-                if column in avoid_indicators:
-                    row = row // 10**6
-                        
-                    get_cache = cache_ts.get(stock, column, row, tf, candle)
-                    # print(get_cache)
-                    if get_cache != "Not Found":
-                        return get_cache
-                    return_value = select_column_row_Daily(column, row, df, candle)
-                    cache_ts.set(return_value, stock, column, row, tf, candle )
-                    return return_value
-                
-                if smallestLastTime is None and smallest == "Daily":
-                    row = row // 10**6
-                    return select_column_row_Daily(column, row, df, candle)
-                if int(str(row)[8:]) >= smallestLastTime :#and isinstance(smallest, int):
-                    row = row // 10**6
-                
-                    return select_column_row_Daily(column, row, df, candle)
-                   
-                return None
-            
-            else:
+        # print("Daily", int(str(row)[8:]), smallestLastTime, int(str(row)[8:]) >= smallestLastTime)
+        if candle == 0:
+            if column in avoid_indicators:
                 row = row // 10**6
                     
                 get_cache = cache_ts.get(stock, column, row, tf, candle)
@@ -402,49 +382,70 @@ def select_candles(stock, i, column, row, df, uniqueTime, tf, df_smallest,  smal
                 cache_ts.set(return_value, stock, column, row, tf, candle )
                 return return_value
             
-            # return select_column_row_Daily(column, row, df, candle)
+            if smallestLastTime is None and smallest == "Daily":
+                row = row // 10**6
+                return select_column_row_Daily(column, row, df, candle)
+            if int(str(row)[8:]) >= smallestLastTime :#and isinstance(smallest, int):
+                row = row // 10**6
+            
+                return select_column_row_Daily(column, row, df, candle)
+                
+            return None
+        
         else:
-            # try:
-            if isinstance(candle, int):
-                if candle <= 0:
-                    
-                    return select_column_row(column, row, df,uniqueTime, tf, smallest, candle)
+            row = row // 10**6
                 
-                    # get_cache = cache_ts.get(stock, column, row, tf, candle)
-                    # # print(get_cache)
-                    # if get_cache != "Not Found":
-                    #     return get_cache
-                    # return_value = select_column_row(column, row, df,uniqueTime, tf, candle)
-                    # cache_ts.set(return_value, stock, column, row, tf, candle )
-                    # return return_value
-                    
+            get_cache = cache_ts.get(stock, column, row, tf, candle)
+            # print(get_cache)
+            if get_cache != "Not Found":
+                return get_cache
+            return_value = select_column_row_Daily(column, row, df, candle)
+            cache_ts.set(return_value, stock, column, row, tf, candle )
+            return return_value
+        
+        # return select_column_row_Daily(column, row, df, candle)
+    else:
+        # try:
+        if isinstance(candle, int):
+            if candle <= 0:
                 
+                return select_column_row(column, row, df,uniqueTime, tf, smallest, candle)
+            
+                # get_cache = cache_ts.get(stock, column, row, tf, candle)
+                # # print(get_cache)
+                # if get_cache != "Not Found":
+                #     return get_cache
+                # return_value = select_column_row(column, row, df,uniqueTime, tf, candle)
+                # cache_ts.set(return_value, stock, column, row, tf, candle )
+                # return return_value
+                
+            
 
-            if isinstance(candle, str):
-                
-                if candle.startswith("=-"):
-                    row = row // 10**6
-                    get_cache = cache_ts.get(stock, column, row, tf, candle)
-                    # print(get_cache)
-                    if get_cache != "Not Found":
-                        return get_cache
-                    return_value = select_column_row_for_prev_const_candle(column, row, df, uniqueTime, candle)
-                    cache_ts.set(return_value, stock, column, row, tf, candle )
-                    return return_value
-                
-                elif candle.startswith("="):
+        if isinstance(candle, str):
+            
+            if candle.startswith("=-"):
+                row = row // 10**6
+                get_cache = cache_ts.get(stock, column, row, tf, candle)
+                # print(get_cache)
+                if get_cache != "Not Found":
+                    return get_cache
+                return_value = select_column_row_for_prev_const_candle(column, row, df, uniqueTime, candle)
+                cache_ts.set(return_value, stock, column, row, tf, candle )
+                return return_value
+            
+            elif candle.startswith("="):
 
-                    # print(column, row, tf, candle)
-                    target_time = cache_ts.get(tf, candle)
+                # print(column, row, tf, candle)
+                target_time = cache_ts.get(tf, candle)
+                
+                if target_time == "Not Found":
                     
-                    if target_time == "Not Found":
-                        
-                        target_time = int("".join(uniqueTime.iloc[int(candle[1:]) - 1, 0].split(":")))
-                        cache_ts.set(tf, candle )
-                    return_value = select_column_row_for_current_const_candle( column, row, df, uniqueTime, candle, target_time, stock, tf)
-                    # cache_ts.set(return_value, column, row, tf, candle )
-                    # print(return_value)
-                    return return_value
+                    target_time = int("".join(uniqueTime.iloc[int(candle[1:]) - 1, 0].split(":")))
+                    cache_ts.set(tf, candle )
+                return_value = select_column_row_for_current_const_candle( column, row, df, uniqueTime, candle, target_time, stock, tf)
+                # cache_ts.set(return_value, column, row, tf, candle )
+                # print(return_value)
+                return return_value
     
     
     # get_cache_1 = cache_for_nparray.get((stock, column, tf, smallest, smallestLastTime, candle))
@@ -502,7 +503,7 @@ def select_candles(stock, i, column, row, df, uniqueTime, tf, df_smallest,  smal
     #     pass
 
     # return file, f"{stock}_{column}_{tf}_{smallest}_{smallestLastTime}_{candle}"
-    
+def select_candles(stock, i, column, row, df, uniqueTime, tf, df_smallest,  smallest, smallestLastTime, candle):
     
     try:
         path = f"indicator_process/fast_cache/{stock}_{column}_{tf}_{smallest}_{smallestLastTime}_{candle}"
@@ -948,6 +949,20 @@ def date_str_to_int(datepass: str):
 
 #________________________________________________________________________
 #
+# def find_max_df(column, prevCandles, df, datetime_number):
+#     try:
+#         # Assume df is sorted by "datetime_number"
+#         # Use searchsorted to find the index where datetime_number would be inserted (right side)
+#         idx = df["datetime_number"].searchsorted(datetime_number, side="right")
+        
+#         # Determine the starting index for the last `prevCandles` rows in the filtered subset
+#         start_idx = max(0, idx - prevCandles)
+        
+#         # Slice the DataFrame from start_idx up to idx and compute the max of the specified column
+#         return df.iloc[start_idx:idx][column].max()
+#     except :
+#         pass
+
 def find_max_df(column, prevCandles, df, datetime_number):
     try:
         # Assume df is sorted by "datetime_number"

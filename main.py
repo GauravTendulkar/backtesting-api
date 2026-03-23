@@ -22,8 +22,15 @@ from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from functools import partial
 from backtesting.backtesting import router
 from database.stock_list import stock_list_router
-
-
+from database.new_user import new_user_social
+from admin_dashboard.admin_requests  import admin_dashboard
+from database.likesdislikes import likesdislikes
+from database.verifytoken import protected
+from admin_dashboard.user_role_manager import admin_dashboard_social_role_change
+from database.strategy_categories import strategy_categories
+from admin_dashboard.dateRange import date_range
+from contextlib import asynccontextmanager
+from functions_duckdb import workers
 
 def calculate_cpu():
 
@@ -42,6 +49,17 @@ def calculate_cpu():
         return num_cpus-2
     else :
         return num_cpus
+# create workers pool 
+# pool_of_process: workers.WorkerPool = None
+
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     global pool_of_process
+#     pool_of_process = workers.WorkerPool(num_workers=4)
+#     yield
+#     pool_of_process.shutdown()
+
+# app = FastAPI(lifespan=lifespan)
     
 
 app = FastAPI()
@@ -57,6 +75,17 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+
+def create_dir():
+    os.makedirs("Clean_data/1min", exist_ok=True)
+    os.makedirs("Clean_data/newData", exist_ok=True)
+    os.makedirs("Clean_data/RAW_daily_data_tradingview", exist_ok=True)
+    os.makedirs("fastCache", exist_ok=True)
+    os.makedirs("indicator_process", exist_ok=True)
+    os.makedirs("database_duckdb", exist_ok=True)
+    
+    
+create_dir()
 
 
 # Read all equations (GET)
@@ -115,7 +144,15 @@ async def root_1(request: Request):
     
 
 
-app.include_router(router, prefix="/api/run-backtesting", tags=["backtesting"])
-app.include_router(oauth_router, prefix="/oauth", tags=["oauth"])
-app.include_router(equation_router, prefix="/equations",  tags=["equation_router"])
-app.include_router(stock_list_router, prefix="/api/stock-list", tags=["stock-list"])
+app.include_router(router, prefix="/backend/api/run-backtesting", tags=["backtesting"])
+app.include_router(oauth_router, prefix="/backend/oauth", tags=["oauth"])
+app.include_router(equation_router, prefix="/backend/equations",  tags=["equation_router"])
+app.include_router(stock_list_router, prefix="/backend/api/stock-list", tags=["stock-list"]) 
+app.include_router(new_user_social, prefix="/backend/api/social-signin", tags=["user-signin"])
+app.include_router(admin_dashboard, prefix="/backend/api/admin-dashboard", tags=["user-signin"])
+app.include_router(likesdislikes, prefix="/backend/api/likes-dislikes", tags=["user-signin"])
+app.include_router(protected, prefix="/backend/api/protected", tags=["user-signin"])
+app.include_router(admin_dashboard_social_role_change, prefix="/backend/api/social-user-role-change", tags=["user-signin"])
+app.include_router(strategy_categories, prefix="/backend/api/strategy_categories", tags=["user-signin"])
+app.include_router(date_range, prefix="/backend/api/date_range", tags=["user-signin"])
+

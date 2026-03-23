@@ -3,7 +3,8 @@ import numpy as np
 from pathlib import Path
 from functions import df_saving, timeframe, indicators, json_saving
 import concurrent.futures
-
+from filelock import FileLock
+import os
 
 def concat_df(old_df, new_df):
     for i in range(1, 100):
@@ -60,7 +61,163 @@ def group_data(data):
 
 
 
-def concat_any_timeframe(stock, timeframe_value, list_of_indicators):
+# def concat_any_timeframe(stock, timeframe_value, list_of_indicators):
+
+#     if timeframe_value == "Daily":
+        
+        
+
+#         path_indicator_process = f"indicator_process/{stock}_Daily"
+#         path_clean = f"Clean_data/RAW_daily_data_tradingview/{stock}_Daily"
+        
+        
+#         with df_saving.lock_file(path_indicator_process):
+#             if df_saving.if_path_exist(path_indicator_process) and df_saving.if_path_exist(path_clean):
+#                 df_indicator_process = df_saving.read_file(path_indicator_process)
+#                 df_indicator_process_length = len(df_indicator_process)
+            
+#                 df_clean = df_saving.read_file(path_clean, extension=".csv")
+#                 df_clean["symbol"] = stock
+#                 df_clean = timeframe.timeframe_Daily(df_clean)
+
+#                 df = concat_df(df_indicator_process, df_clean)
+#                 df = indicators.convert_date_time_datetime_into_numbers(df)
+
+#                 for i in range(0, len(list_of_indicators)):
+#                     df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
+#                 # print(df)
+#                 df_saving.to_file(df, path_indicator_process)
+        
+#             elif df_saving.if_path_exist(path_clean):
+#                 df_clean = df_saving.read_file(path_clean, extension=".csv")
+#                 df_clean["symbol"] = stock
+#                 df_clean = timeframe.timeframe_Daily(df_clean)
+
+#                 df = indicators.convert_date_time_datetime_into_numbers(df_clean)
+
+#                 for i in range(0, len(list_of_indicators)):
+#                     df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
+                
+#                 df_saving.to_file(df, path_indicator_process)
+        
+#     elif timeframe_value == "Weekly" or timeframe_value == "Monthly":
+#         # from_ = f"indicator_process/{stock}_{"Daily"}"
+#         # to_ = f"indicator_process/{stock}_{timeframe_value}"
+
+#         path_indicator_process = f"indicator_process/{stock}_{timeframe_value}"
+#         path_indicator_process_Daily = f"indicator_process/{stock}_Daily"
+
+
+#         with df_saving.lock_file(path_indicator_process):
+#             if df_saving.if_path_exist(path_indicator_process) and df_saving.if_path_exist(path_indicator_process_Daily):
+#                 df_indicator_process_Daily = df_saving.read_file(path_indicator_process_Daily)
+#                 df_indicator_process_Daily["symbol"] = stock
+#                 df_indicator_process_Daily = timeframe.convert_daily_weekly_and_monthly(df_indicator_process_Daily, timeframe_value)
+#                 # df_old_length = len(df_indicator_process_Daily)
+            
+#                 df_indicator_process = df_saving.read_file(path_indicator_process)
+                
+
+#                 df = concat_df(df_indicator_process, df_indicator_process_Daily)
+#                 df = indicators.convert_date_time_datetime_into_numbers(df)
+
+#                 for i in range(0, len(list_of_indicators)):
+#                     df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
+#                 # print(df)
+#                 df_saving.to_file(df, path_indicator_process)
+#             elif df_saving.if_path_exist(path_indicator_process_Daily) :
+#                 df_indicator_process_Daily = df_saving.read_file(path_indicator_process_Daily)
+#                 df_indicator_process_Daily["symbol"] = stock
+#                 df_indicator_process_Daily = timeframe.convert_daily_weekly_and_monthly(df_indicator_process_Daily, timeframe_value)
+                
+#                 df = indicators.convert_date_time_datetime_into_numbers(df_indicator_process_Daily)
+
+#                 for i in range(0, len(list_of_indicators)):
+#                     df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
+        
+#                 df_saving.to_file(df, path_indicator_process)
+
+# #**************************************
+#     elif timeframe_value == 1:
+        
+        
+#         path_indicator_process = f"indicator_process/{stock}_1min"
+#         path_clean = f"Clean_data/1min/{stock}_1min"
+                
+#         with df_saving.lock_file(path_indicator_process):
+#             if df_saving.if_path_exist(path_indicator_process) and df_saving.if_path_exist(path_clean):
+#                 df_clean = df_saving.read_file(path_clean, extension=".csv")
+#                 df_clean["symbol"] = stock
+#                 df_clean = timeframe.timeframe_1min(df_clean)
+
+#                 df_indicator_process = df_saving.read_file(path_indicator_process)
+                
+#                 df = concat_df(df_indicator_process, df_clean)
+#                 df = indicators.convert_date_time_datetime_into_numbers(df)
+
+#                 for i in range(0, len(list_of_indicators)):
+#                     df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
+                
+#                 df_saving.to_file(df, path_indicator_process)
+#             elif df_saving.if_path_exist(path_clean) :
+#                 df_clean = df_saving.read_file(path_clean, extension=".csv")
+#                 df_clean["symbol"] = stock
+#                 df_clean = timeframe.timeframe_1min(df_clean)
+
+#                 df = indicators.convert_date_time_datetime_into_numbers(df_clean)
+
+#                 for i in range(0, len(list_of_indicators)):
+#                     df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
+                
+#                 df_saving.to_file(df, path_indicator_process)
+
+#     elif 60*5 >= timeframe_value and timeframe_value > 1:
+
+#         # path_old = "indicator_process/"+str(stock)+"_"+str(timeframe_value)+"min"
+#         # path_new = "Clean_data/newData/"+str(stock)+"_"+str(1)+"min"
+        
+#         path_indicator_process_1min = f"indicator_process/{stock}_1min"
+#         path_indicator_process = f"indicator_process/{stock}_{timeframe_value}min"
+
+        
+        
+#         with df_saving.lock_file(path_indicator_process):
+#             if df_saving.if_path_exist(path_indicator_process) and df_saving.if_path_exist(path_indicator_process_1min):
+#                 df_indicator_process = df_saving.read_file(path_indicator_process)
+#                 # df_old_length = len(df_old)
+
+#                 # create new data to required tf
+#                 df_indicator_process_1min = df_saving.read_file(path_indicator_process_1min)
+#                 df_indicator_process_1min["symbol"] = stock
+#                 # df_new = timeframe.timeframe_1min(df_new)
+#                 df_indicator_process_1min = timeframe.convert_1min_anymin(df_indicator_process_1min, timeframe_value)
+                
+#                 # concat new and old df
+#                 df = concat_df(df_indicator_process, df_indicator_process_1min)
+#                 df = indicators.convert_date_time_datetime_into_numbers(df)
+                
+#                 # apply indicators
+#                 for i in range(0, len(list_of_indicators)):
+#                     # print(list_of_indicators[i])
+#                     df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
+                
+#                 df_saving.to_file(df, path_indicator_process)
+
+#             elif df_saving.if_path_exist(path_indicator_process_1min) :
+#                 df_indicator_process_1min = df_saving.read_file(path_indicator_process_1min)
+#                 df_indicator_process_1min["symbol"] = stock
+#                 # df_new = timeframe.timeframe_1min(df_new)
+#                 df_indicator_process_1min = timeframe.convert_1min_anymin(df_indicator_process_1min, timeframe_value)
+
+#                 df = indicators.convert_date_time_datetime_into_numbers(df_indicator_process_1min)
+
+#                 for i in range(0, len(list_of_indicators)):
+#                     # print(list_of_indicators[i])
+#                     df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
+                
+#                 df_saving.to_file(df, path_indicator_process)
+
+def concat_any_timeframe_delete_indicators(stock, timeframe_value):
 
     if timeframe_value == "Daily":
         
@@ -71,7 +228,7 @@ def concat_any_timeframe(stock, timeframe_value, list_of_indicators):
         
         
         with df_saving.lock_file(path_indicator_process):
-            if df_saving.if_path_exist(path_indicator_process) and df_saving.if_path_exist(path_clean):
+            if df_saving.if_path_exist(path_indicator_process) and df_saving.if_path_exist(path_clean, extension=".csv"):
                 df_indicator_process = df_saving.read_file(path_indicator_process)
                 df_indicator_process_length = len(df_indicator_process)
             
@@ -81,24 +238,25 @@ def concat_any_timeframe(stock, timeframe_value, list_of_indicators):
 
                 df = concat_df(df_indicator_process, df_clean)
                 df = indicators.convert_date_time_datetime_into_numbers(df)
-
-                for i in range(0, len(list_of_indicators)):
-                    df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
+                
+                df = df[[ 'symbol', "open" ,"high", "low", "close", "volume", "date_number", "time_number", "datetime_number"]]
+                # for i in range(0, len(list_of_indicators)):
+                #     df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
                 # print(df)
                 df_saving.to_file(df, path_indicator_process)
         
-            elif df_saving.if_path_exist(path_clean):
+            elif df_saving.if_path_exist(path_clean, extension=".csv"):
                 df_clean = df_saving.read_file(path_clean, extension=".csv")
                 df_clean["symbol"] = stock
                 df_clean = timeframe.timeframe_Daily(df_clean)
 
                 df = indicators.convert_date_time_datetime_into_numbers(df_clean)
-
-                for i in range(0, len(list_of_indicators)):
-                    df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
+                df = df[[ 'symbol', "open" ,"high", "low", "close", "volume", "date_number", "time_number", "datetime_number"]]
+                # for i in range(0, len(list_of_indicators)):
+                #     df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
                 
                 df_saving.to_file(df, path_indicator_process)
-        
+        df_saving.remove_lock(path_indicator_process)
     elif timeframe_value == "Weekly" or timeframe_value == "Monthly":
         # from_ = f"indicator_process/{stock}_{"Daily"}"
         # to_ = f"indicator_process/{stock}_{timeframe_value}"
@@ -119,9 +277,10 @@ def concat_any_timeframe(stock, timeframe_value, list_of_indicators):
 
                 df = concat_df(df_indicator_process, df_indicator_process_Daily)
                 df = indicators.convert_date_time_datetime_into_numbers(df)
-
-                for i in range(0, len(list_of_indicators)):
-                    df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
+                
+                df = df[[ 'symbol', "open" ,"high", "low", "close", "volume", "date_number", "time_number", "datetime_number"]]
+                # for i in range(0, len(list_of_indicators)):
+                #     df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
                 # print(df)
                 df_saving.to_file(df, path_indicator_process)
             elif df_saving.if_path_exist(path_indicator_process_Daily) :
@@ -130,12 +289,13 @@ def concat_any_timeframe(stock, timeframe_value, list_of_indicators):
                 df_indicator_process_Daily = timeframe.convert_daily_weekly_and_monthly(df_indicator_process_Daily, timeframe_value)
                 
                 df = indicators.convert_date_time_datetime_into_numbers(df_indicator_process_Daily)
-
-                for i in range(0, len(list_of_indicators)):
-                    df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
+                
+                df = df[[ 'symbol', "open" ,"high", "low", "close", "volume", "date_number", "time_number", "datetime_number"]]
+                # for i in range(0, len(list_of_indicators)):
+                #     df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
         
                 df_saving.to_file(df, path_indicator_process)
-
+        df_saving.remove_lock(path_indicator_process)
 #**************************************
     elif timeframe_value == 1:
         
@@ -153,9 +313,10 @@ def concat_any_timeframe(stock, timeframe_value, list_of_indicators):
                 
                 df = concat_df(df_indicator_process, df_clean)
                 df = indicators.convert_date_time_datetime_into_numbers(df)
-
-                for i in range(0, len(list_of_indicators)):
-                    df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
+                
+                df = df[[ 'symbol', "open" ,"high", "low", "close", "volume", "date_number", "time_number", "datetime_number"]]
+                # for i in range(0, len(list_of_indicators)):
+                #     df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
                 
                 df_saving.to_file(df, path_indicator_process)
             elif df_saving.if_path_exist(path_clean) :
@@ -165,11 +326,12 @@ def concat_any_timeframe(stock, timeframe_value, list_of_indicators):
 
                 df = indicators.convert_date_time_datetime_into_numbers(df_clean)
 
-                for i in range(0, len(list_of_indicators)):
-                    df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
+                df = df[[ 'symbol', "open" ,"high", "low", "close", "volume", "date_number", "time_number", "datetime_number"]]
+                # for i in range(0, len(list_of_indicators)):
+                #     df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
                 
                 df_saving.to_file(df, path_indicator_process)
-
+        df_saving.remove_lock(path_indicator_process)
     elif 60*5 >= timeframe_value and timeframe_value > 1:
 
         # path_old = "indicator_process/"+str(stock)+"_"+str(timeframe_value)+"min"
@@ -195,10 +357,11 @@ def concat_any_timeframe(stock, timeframe_value, list_of_indicators):
                 df = concat_df(df_indicator_process, df_indicator_process_1min)
                 df = indicators.convert_date_time_datetime_into_numbers(df)
                 
+                df = df[[ 'symbol', "open" ,"high", "low", "close", "volume", "date_number", "time_number", "datetime_number"]]
                 # apply indicators
-                for i in range(0, len(list_of_indicators)):
-                    # print(list_of_indicators[i])
-                    df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
+                # for i in range(0, len(list_of_indicators)):
+                #     # print(list_of_indicators[i])
+                #     df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
                 
                 df_saving.to_file(df, path_indicator_process)
 
@@ -210,21 +373,22 @@ def concat_any_timeframe(stock, timeframe_value, list_of_indicators):
 
                 df = indicators.convert_date_time_datetime_into_numbers(df_indicator_process_1min)
 
-                for i in range(0, len(list_of_indicators)):
-                    # print(list_of_indicators[i])
-                    df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
+                df = df[[ 'symbol', "open" ,"high", "low", "close", "volume", "date_number", "time_number", "datetime_number"]]
+                # for i in range(0, len(list_of_indicators)):
+                #     # print(list_of_indicators[i])
+                #     df = indicators.get_indicator_shortform(df, list_of_indicators[i], 1)
                 
                 df_saving.to_file(df, path_indicator_process)
-
+        df_saving.remove_lock(path_indicator_process)
 
 def clean_data_concat(stock):
     print(stock)
     path_old = f"Clean_data/RAW_daily_data_tradingview/{stock}_Daily"
     path_new = f"Clean_data/newData/{stock}_Daily"
 
-    with df_saving.lock_file(path_old):
-        print("path_old", df_saving.if_path_exist(path_old,extension=".csv"))
-        print("path_new", df_saving.if_path_exist(path_new, extension=".csv"))
+    with df_saving.lock_file(path_old, extension=".csv"):
+        # print("path_old", df_saving.if_path_exist(path_old,extension=".csv"))
+        # print("path_new", df_saving.if_path_exist(path_new, extension=".csv"))
 
         if df_saving.if_path_exist(path_old, extension=".csv") and df_saving.if_path_exist(path_new, extension=".csv"):
             df_old = df_saving.read_file(path_old, extension=".csv")
@@ -235,15 +399,15 @@ def clean_data_concat(stock):
             
             # print(df_new)
             df_saving.to_file(df_new, path_old,  extension=".csv")
-        elif df_saving.if_path_exist(path_new) :
+        elif df_saving.if_path_exist(path_new, extension=".csv") :
             df_new = df_saving.read_file(path_new, extension=".csv")
             df_saving.to_file(df_new, path_old,  extension=".csv")
-
+    df_saving.remove_lock(path_old, extension=".csv")
     path_old = f"Clean_data/1min/{stock}_1min"
     path_new = f"Clean_data/newData/{stock}_1min"
     # print("path_old", df_saving.if_path_exist(path_old))
     # print("path_new", df_saving.if_path_exist(path_new))
-    with df_saving.lock_file(path_old):
+    with df_saving.lock_file(path_old, extension=".csv"):
         if df_saving.if_path_exist(path_old, extension=".csv") and df_saving.if_path_exist(path_new, extension=".csv"):
             df_old = df_saving.read_file(path_old, extension=".csv")
         
@@ -256,12 +420,13 @@ def clean_data_concat(stock):
         elif df_saving.if_path_exist(path_new, extension=".csv") :
             df_new = df_saving.read_file(path_new, extension=".csv")
             df_saving.to_file(df_new, path_old, extension=".csv")
+    df_saving.remove_lock(path_old, extension=".csv")
 
 def cleanData_to_1min_Daily(stock):
     path_clean = f"Clean_data/RAW_daily_data_tradingview/{stock}_Daily"
     path_indicator_process = f"indicator_process/{stock}_Daily"
 
-    with df_saving.lock_file(path_indicator_process) :
+    with df_saving.lock_file(path_indicator_process, extension=".csv") :
         if df_saving.if_path_exist(path_indicator_process, extension=".csv") and df_saving.if_path_exist(path_clean, extension=".csv"):
             df_clean = df_saving.read_file(path_clean, extension=".csv")
             df_clean["symbol"] = stock
@@ -281,23 +446,23 @@ def cleanData_to_1min_Daily(stock):
             df = indicators.convert_date_time_datetime_into_numbers(df_clean)
 
             df_saving.to_file(df, path_indicator_process)
-
+    df_saving.remove_lock(path_indicator_process, extension=".csv")
 
     path_clean = f"Clean_data/1min/{stock}_1min"
     path_indicator_process = f"indicator_process/{stock}_1min"
 
-    with df_saving.lock_file(path_indicator_process):
+    with df_saving.lock_file(path_indicator_process, extension=".csv"):
         if df_saving.if_path_exist(path_indicator_process, extension=".csv") and df_saving.if_path_exist(path_clean, extension=".csv"):
             df_clean = df_saving.read_file(path_clean, extension=".csv")
             df_clean["symbol"] = stock
             df_clean = timeframe.timeframe_1min(df_clean)
 
-            df_indicator_process = df_saving.read_file(path_indicator_process)
+            df_indicator_process = df_saving.read_file(path_indicator_process, extension=".csv")
             
             df = concat_df(df_indicator_process, df_clean)
             df = indicators.convert_date_time_datetime_into_numbers(df)
             # print(df_new)
-            df_saving.to_file(df, path_indicator_process)
+            df_saving.to_file(df, path_indicator_process, extension=".csv")
         elif df_saving.if_path_exist(path_clean, extension=".csv") :
             df_clean = df_saving.read_file(path_clean, extension=".csv")
             df_clean["symbol"] = stock
@@ -306,8 +471,8 @@ def cleanData_to_1min_Daily(stock):
             df = indicators.convert_date_time_datetime_into_numbers(df_clean)
             df = indicators.convert_date_time_datetime_into_numbers(df)
 
-            df_saving.to_file(df, path_indicator_process)
-
+            df_saving.to_file(df, path_indicator_process, extension=".csv")
+    df_saving.remove_lock(path_indicator_process, extension=".csv")
 
 
 def list_files(folder_path):
@@ -325,45 +490,242 @@ def list_files(folder_path):
 
 
 
-def temp_concat_any_timeframe(res):
-            # It can optionally return a value if needed
-    return concat_any_timeframe(res[0], res[1], res[2])
+# def temp_concat_any_timeframe(res):
+#             # It can optionally return a value if needed
+#     return concat_any_timeframe(res[0], res[1], res[2])
+
+# def run_once_combined():
+#     location = "Clean_data/df_columns_exists.json"
+#     with json_saving.lock_file(location):
+#         stock_list = list_files("Clean_data/newData")
+#         print(stock_list)
+#         if len(stock_list) == 0:
+#             print("No files found in the directory.")
+#             return
+#         # for stock in stock_list:
+#         #     clean_data_concat(stock)
+#         # for stock in stock_list:
+#         #     cleanData_to_1min_Daily(stock)
+#         with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+            
+#             executor.map(clean_data_concat, stock_list)
+#         with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+            
+#             executor.map(cleanData_to_1min_Daily, stock_list)
+#         try :
+#             loaded_data = json_saving.load_data_thread_safe(location)
+#             result = group_data(loaded_data)
+
+#             # for i in range(0, len(result)):
+#             #     concat_any_timeframe( result[i][0], result[i][1], result[i][2])
+            
+
+            
+            
+#             with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+        
+#                 executor.map(temp_concat_any_timeframe, result)
+#             #     results = list(executor.map(temp_concat_any_timeframe, result))
+#         except:
+#             print("ERROR")
+#             pass
+
+
+
+def get_dataframe_file_names(folder_name):
+    # List all files and directories in a path
+    files = os.listdir(folder_name)  # Replace with your path
+
+    files_new = []
+    for i in range(0, len(files)):
+        if ".csv" in files[i] or ".parquet" in files[i] or ".feather" in files[i] or ".pickle" in files[i]:
+            split_name = files[i].split(".")[0].split("_")
+            if "min" in split_name[1]:
+
+                files_new.append([split_name[0] , int(split_name[1][:-3])])
+            else:
+                files_new.append([split_name[0] , split_name[1]])
+
+    return files_new
 
 def run_once_combined():
-    location = "Clean_data/df_columns_exists.json"
-    with json_saving.lock_file(location):
+    file_path = "wait_for_update"
+    lock_path = file_path + ".lock"
+    lock = FileLock(lock_path)
+
+    with lock:
         stock_list = list_files("Clean_data/newData")
-        print(stock_list)
-        # for stock in stock_list:
-        #     clean_data_concat(stock)
-        # for stock in stock_list:
-        #     cleanData_to_1min_Daily(stock)
-        with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+        # print(stock_list)
+        if len(stock_list) == 0:
+            print("No files found in the directory.")
+            return
+       
+        # with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
             
-            executor.map(clean_data_concat, stock_list)
-        with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+        #     executor.map(clean_data_concat, stock_list)
+        # with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
             
-            executor.map(cleanData_to_1min_Daily, stock_list)
-        try :
-            loaded_data = json_saving.load_data_thread_safe(location)
-            result = group_data(loaded_data)
+        #     executor.map(cleanData_to_1min_Daily, stock_list)
 
-            # for i in range(0, len(result)):
-            #     concat_any_timeframe( result[i][0], result[i][1], result[i][2])
-            
+        for i in range(0, len(stock_list)):
+            clean_data_concat(stock_list[i])
+        # for i in range(0, len(stock_list)):
+        #     cleanData_to_1min_Daily(stock_list[i])
 
-            
-            
-            with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+
+        files_list = get_dataframe_file_names("indicator_process")
+        for i in range(0, len(files_list)):
+            try:
+                concat_any_timeframe_delete_indicators(files_list[i][0], files_list[i][1])
+            except:
+                print("ERROR", files_list[i])
+        # try :
+        #     # loaded_data = json_saving.load_data_thread_safe(location)
+        #     # result = group_data(loaded_data)
+
+        #     with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
         
-                executor.map(temp_concat_any_timeframe, result)
-            #     results = list(executor.map(temp_concat_any_timeframe, result))
-        except:
-            print("ERROR")
-            pass
+        #         executor.map(temp_concat_any_timeframe, result)
+            
+        # except:
+        #     print("ERROR")
+            
 
        
         
 
 # from functions import newData_concat
 # run_once_combined()
+
+
+
+def list_files_new_data(folder_path):
+    """Returns a list of files in the given folder."""
+    path = Path(folder_path)
+    if not path.exists():
+        return f"Error: The folder '{folder_path}' does not exist."
+    files = [file.name for file in path.iterdir() if file.is_file()]
+    # print(files)
+    one_min_tf = []
+    daily_tf = []
+    for i in range(0, len(files)):
+        extension = ""
+        if ".csv" in files[i]:
+            extension = "csv"
+        elif ".parquet" in files[i]:
+            extension = "parquet"
+
+        if "1min" in files[i]:
+            one_min_tf.append({"tf" : "1min", "stock" : files[i][0 : files[i].find("_1min")], "extension" : extension})
+        elif "Daily" in files[i]:
+            daily_tf.append({"tf" : "Daily", "stock" : files[i][0 : files[i].find("_Daily")], "extension" : extension})
+    
+    # files = [file for file in files if "1min" in file]
+
+    return one_min_tf, daily_tf
+
+import duckdb
+import pandas as pd
+
+def run_once_combined_duckdb_helper(stock, 
+                                    tf = "1min", 
+                                    extension_old = "parquet",
+                                    extension_new = "parquet", 
+                                    extension_output = "parquet",
+                                     conn = duckdb.connect()):
+
+    if stock is None:
+        return None
+
+
+    if tf == "1min":
+        path_old = f"Clean_data/1min/{stock}_1min.{extension_old}"
+        path_new = f"Clean_data/newData/{stock}_1min.{extension_new}"
+    elif tf == "Daily":
+        path_old = f"Clean_data/RAW_daily_data_tradingview/{stock}_Daily.{extension_old}"
+        path_new = f"Clean_data/newData/{stock}_Daily.{extension_new}"
+    try:
+        df_old = conn.execute(f""" 
+        SELECT * FROM 
+        "{path_old}"
+        """).df()
+    except:
+        df_old = pd.DataFrame()
+    try:
+        df_new = conn.execute(f""" 
+        SELECT * FROM 
+        "{path_new}"
+        """).df()
+    except:
+        df_new = pd.DataFrame()
+
+    df_concat = pd.concat([ df_old, df_new])
+
+    if len(df_concat) > 0:
+        query = """ 
+    SELECT DISTINCT ON (datetime) *
+        FROM df_concat
+        ORDER BY datetime
+        """
+        # df_output = conn.execute("""
+        
+        # """).df()
+        if tf == "1min":
+            path_old = f"Clean_data/1min/{stock}_1min.{extension_output}"
+            
+        elif tf == "Daily":
+            path_old = f"Clean_data/RAW_daily_data_tradingview/{stock}_Daily.{extension_output}"
+            
+            
+        if extension_output == "csv":
+            conn.execute(f"COPY ({query}) TO '{path_old}' (HEADER, DELIMITER ',');")
+        elif extension_output == "parquet":
+            conn.execute(f"COPY ({query}) TO '{path_old}' (FORMAT PARQUET);")
+
+# print(len(df_output))
+# df_output
+def run_once_combined_duckdb():
+    stock_list_1min, stock_list_Daily  = list_files_new_data("Clean_data/newData")
+    print(stock_list_1min)
+    print(stock_list_Daily)
+    conn = duckdb.connect()
+
+    if len(stock_list_1min) == 0:
+        print("No files found in the directory for 1min.")
+    else:
+        stock_old_data_1min_cache = {}
+        stock_old_data_1min, _  = list_files_new_data("Clean_data/1min")
+        for i, item in enumerate(stock_old_data_1min):
+            stock_old_data_1min_cache[item["stock"]] = item
+
+        for i, item in enumerate(stock_list_1min):
+            extension_old =  "csv"
+            if item["stock"] in stock_old_data_1min_cache:
+                extension_old = stock_old_data_1min_cache[item["stock"]]["extension"]
+
+            run_once_combined_duckdb_helper(item["stock"], 
+                                            tf = "1min", 
+                                            extension_old = extension_old,
+                                            extension_new = item["extension"], 
+                                            extension_output = "parquet",
+                                            conn = conn)
+    if len(stock_list_Daily) == 0:
+        print("No files found in the directory for Daily.")
+        
+    else:
+        stock_old_data_Daily_cache = {}
+        _ , stock_old_data_Daily  = list_files_new_data("Clean_data/RAW_daily_data_tradingview")
+        for i, item in enumerate(stock_old_data_Daily):
+            stock_old_data_Daily_cache[item["stock"]] = item
+
+        for i, item in enumerate(stock_list_Daily):
+            extension_old =  "csv"
+            if item["stock"] in stock_old_data_Daily_cache:
+                extension_old = stock_old_data_Daily_cache[item["stock"]]["extension"]
+    
+            run_once_combined_duckdb_helper(item["stock"], 
+                                            tf = "Daily", 
+                                            extension_old = extension_old,
+                                            extension_new = item["extension"], 
+                                            extension_output = "parquet",
+                                            conn = conn)

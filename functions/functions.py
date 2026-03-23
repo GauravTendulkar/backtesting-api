@@ -55,9 +55,35 @@ def log(data):
 def count_previous_entry_intraday(Tracking, date):
         return (Tracking["date_number"] == date).sum()
 
+def count_previous_entry_intraday_1(date_number_array, date):
+        return (date_number_array == date).sum()
+
+def convert_to_year_and_weekinyear(d):
+    # print("d", d)
+    if d != 0:
+        d = str(d)
+        specific_date = date(int(d[0:4]), int(d[4:6]), int(d[6:8]))
+        iso_calendar_tuple = specific_date.isocalendar()
+        return int(f"{iso_calendar_tuple[0]}{iso_calendar_tuple[1]}")
+    elif d == 0:
+        return "0"
 
 
+def count_previous_entry_weekly(date_number_array, date):
+# dates_array = np.array([20250926, 
+#           20250925, 
+#           20250924, 
+#           20250923, 
+#           20250922,
+#           20250921])
+    week_of_year = np.zeros(len(date_number_array), dtype=int)
+    for i in range(0, len(date_number_array)):
+        week_of_year[i] = convert_to_year_and_weekinyear(date_number_array[i])
+    # print((week_of_year == convert_to_year_and_weekinyear(date)).sum() , "*************************")
+    return (week_of_year == convert_to_year_and_weekinyear(date)).sum()
 
+def count_previous_entry_monthly(date_number_array, date):
+    return ((date_number_array/100 - date_number_array/100%1) == (date/100 - date/100%1)).sum()
 
 def latest_file(fileName, length = 100):
     file_name = "indicator_process/fast_cache/_latest_file.csv"
@@ -125,7 +151,21 @@ def get_smallest_tf(data):
     return get_smallest_tf 
 
 
-def check_tf_range(tf, start_date, end_date):
+def check_tf_range(tf, start_date, end_date, 
+                   date_ranges={1: {'years': 1, 'months': 0, 'days': 0},
+                                2: {'years': 1, 'months': 0, 'days': 0},
+                                3: {'years': 1, 'months': 0, 'days': 0},
+                                5: {'years': 1, 'months': 0, 'days': 0},
+                                10: {'years': 1, 'months': 0, 'days': 0},
+                                15: {'years': 1, 'months': 0, 'days': 0},
+                                30: {'years': 1, 'months': 0, 'days': 0},
+                                60: {'years': 1, 'months': 0, 'days': 0},
+                                120: {'years': 1, 'months': 0, 'days': 0},
+                                180: {'years': 1, 'months': 0, 'days': 0},
+                                240: {'years': 1, 'months': 0, 'days': 0},
+                                'Daily': {'years': 1, 'months': 0, 'days': 0},
+                                'Weekly': {'years': 1, 'months': 0, 'days': 0},
+                                'Monthly': {'years': 1, 'months': 0, 'days': 0}}):
     date_format = "%Y-%m-%d"
     try:
         start = datetime.strptime(start_date, date_format)
@@ -137,24 +177,29 @@ def check_tf_range(tf, start_date, end_date):
     # print(end - relativedelta(months=3) >= start)
     
     limit = {
-        1 : end - relativedelta(months=6),
-        2 : end - relativedelta(months=6),
-        3 : end - relativedelta(months=6),
-        5 : end - relativedelta(years=1),
-        10 : end - relativedelta(years=10),
-        15 : end - relativedelta(years=10),
-        30 : end - relativedelta(years=5),
-        60 : end - relativedelta(years=5),
-        120 : end - relativedelta(years=10),
-        180 : end - relativedelta(years=10),
-        240 : end - relativedelta(years=10),
-        "Daily" : end - relativedelta(years=10),
-        "Weekly" : end - relativedelta(years=10),
-        "Monthly" : end - relativedelta(years=10),
+        1 : end - relativedelta(years=date_ranges[1]["years"], months=date_ranges[1]["months"], days=date_ranges[1]["days"] ),
+        2 : end - relativedelta(years=date_ranges[2]["years"], months=date_ranges[2]["months"], days=date_ranges[2]["days"] ),
+        3 : end - relativedelta(years=date_ranges[3]["years"], months=date_ranges[3]["months"], days=date_ranges[3]["days"] ),
+        5 : end - relativedelta(years=date_ranges[5]["years"], months=date_ranges[5]["months"], days=date_ranges[5]["days"] ),
+        10 : end - relativedelta(years=date_ranges[10]["years"], months=date_ranges[10]["months"], days=date_ranges[10]["days"] ),
+        15 : end - relativedelta(years=date_ranges[15]["years"], months=date_ranges[15]["months"], days=date_ranges[15]["days"] ),
+        30 : end - relativedelta(years=date_ranges[30]["years"], months=date_ranges[30]["months"], days=date_ranges[30]["days"] ),
+        60 : end - relativedelta(years=date_ranges[60]["years"], months=date_ranges[60]["months"], days=date_ranges[60]["days"] ),
+        120 : end - relativedelta(years=date_ranges[120]["years"], months=date_ranges[120]["months"], days=date_ranges[120]["days"] ),
+        180 : end - relativedelta(years=date_ranges[180]["years"], months=date_ranges[180]["months"], days=date_ranges[180]["days"] ),
+        240 : end - relativedelta(years=date_ranges[240]["years"], months=date_ranges[240]["months"], days=date_ranges[240]["days"] ),
+        "Daily" : end - relativedelta(years=date_ranges["Daily"]["years"], months=date_ranges["Daily"]["months"], days=date_ranges["Daily"]["days"] ),
+        "Weekly" : end - relativedelta(years=date_ranges["Weekly"]["years"], months=date_ranges["Weekly"]["months"], days=date_ranges["Weekly"]["days"] ),
+        "Monthly" : end - relativedelta(years=date_ranges["Monthly"]["years"], months=date_ranges["Monthly"]["months"], days=date_ranges[1]["days"] ),
 
     }
 
     # print("tf ************", tf)
+    data = {
+        "error" : f"Date range exceeds the allowed limit for timeframe '{tf}'. "
+                   f"Minimum allowed start date: {limit[tf].strftime('%Y-%m-%d')}",
+             "fromDate": limit[tf].strftime('%Y-%m-%d')
+    }
 
     if limit[tf] <= start:
         pass
@@ -162,26 +207,36 @@ def check_tf_range(tf, start_date, end_date):
         # raise HTTPException(status_code=400, detail="Date range exceeds the allowed limit of 1 year.")
         raise HTTPException(
             status_code=400,
-            detail=f"Date range exceeds the allowed limit for timeframe '{tf}'. "
-                   f"Minimum allowed start date: {limit[tf].strftime('%d-%m-%Y')}"
+            detail= data
+        
+                
         )
     
+
+
 
 def check_stock_files_if_exists(stocks_list):
     stocks_list_temp = []
 
     files = [f for f in os.listdir('Clean_data/1min') if os.path.isfile(os.path.join('Clean_data/1min', f))]
+    files.remove('.gitkeep')
     temp_1min = []
+    
     for i in range(0, len(files)):
-        temp_1min.append(files[i].split("_")[0])
-
-    # print(temp_1min)
+        if ".csv" in files[i] :
+            temp_1min.append(files[i][:-9])
+        if ".parquet" in files[i] :
+            temp_1min.append(files[i][:-13])
+    
     temp_Daily = []
     files = [f for f in os.listdir('Clean_data/RAW_daily_data_tradingview') if os.path.isfile(os.path.join('Clean_data/RAW_daily_data_tradingview', f))]
+    files.remove('.gitkeep')
     for i in range(0, len(files)):
-        temp_Daily.append(files[i].split("_")[0])
-    # print(temp_Daily)
-
+        if ".csv" in files[i] :
+            temp_Daily.append(files[i][:-10])
+        if ".parquet" in files[i] :
+            temp_1min.append(files[i][:-14])
+    
     for i in range(0, len(stocks_list)):
         
         if stocks_list[i] in temp_1min:
@@ -194,3 +249,6 @@ def check_stock_files_if_exists(stocks_list):
                 stocks_list_temp.append(stocks_list[i])
     
     return stocks_list_temp
+
+# l = ["INFY", "BAJAJ_AUTO"]
+# check_stock_files_if_exists(l)

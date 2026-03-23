@@ -16,6 +16,13 @@ db = client.stocks_backtesing_data_server
 
 collection = db["equation"]
 collection_user = db["users"]
+collection_social_user = db["social_user"]
+collection_roles = db["roles"]
+collection_groups = db["groups"]
+collection_permissions = db["permissions"]
+collection_votes = db["votes"]
+collection_strategy_run = db["strategy_run"]
+collection_date_range = db["date_range"]
 
 # Dependency to get the database connection
 def get_collection():
@@ -24,8 +31,8 @@ def get_collection():
     finally:
         client.close()  # Close the connection after the request is completed
 
-def get_collection_user():
-    try:
-        yield collection_user
-    finally:
-        client.close()
+# def get_collection_user():
+#     try:
+#         yield collection_user
+#     finally:
+#         client.close()

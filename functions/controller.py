@@ -31,6 +31,7 @@ def change_into_any_timeframe(stock, timeframe_value):
                 df = indicators.convert_date_time_datetime_into_numbers(df)
                 
                 df_saving.to_file(df, to_)
+        df_saving.remove_lock(to_)
         # print(f"outlock {timeframe_value}")
         
     elif timeframe_value == "Weekly" or timeframe_value == "Monthly":
@@ -49,7 +50,7 @@ def change_into_any_timeframe(stock, timeframe_value):
                 
                 df_saving.to_file(df, to_)
 
-
+        df_saving.remove_lock(to_)
 
     elif timeframe_value == 1:
         
@@ -70,7 +71,7 @@ def change_into_any_timeframe(stock, timeframe_value):
                 
                 df_saving.to_file(df, to_)
         # print(f"outlock {timeframe_value}")
-
+        df_saving.remove_lock(to_)
     elif 60*5 >= timeframe_value and timeframe_value > 1:
 
         from_ = "indicator_process/"+str(stock)+"_"+str(1)+"min"
@@ -102,9 +103,9 @@ def change_into_any_timeframe(stock, timeframe_value):
                 df = indicators.convert_date_time_datetime_into_numbers(df)
                 
                 df_saving.to_file(df, to_)
-        # print(f"outlock {timeframe_value}")
+        # print(f"outlock {timeframe_value}") 
     # print(f"Ended {timeframe_value}")
-
+        df_saving.remove_lock(to_)
     
 
 #__________________________________________________________
@@ -115,11 +116,11 @@ def apply_indicators(stock, timeframe_value ,shortform_indicator, arr):
     if timeframe_value == "Daily" or timeframe_value == "Weekly" or timeframe_value == "Monthly":
         path = f"indicator_process/{stock}_{timeframe_value}"
     
-    elif 1 <= timeframe_value & timeframe_value <= 60*5:
+    elif 1 <= timeframe_value and timeframe_value <= 60*5:
         path = f"indicator_process/"+str(stock)+ "_"+str(timeframe_value)+"min"
     
     # print(path)    
-
+    print(path)
     if df_saving.if_path_exist(path) :
        
         df_list = df_saving.get_columns(path)
@@ -130,17 +131,22 @@ def apply_indicators(stock, timeframe_value ,shortform_indicator, arr):
             with df_saving.lock_file(path):
                 
                 df = df_saving.read_file(path)
+                print(stock, arr)
                 # print("df.columns")
                 # print(shortform_indicator)
                 if shortform_indicator not in df.columns:
                     # print(arr)
                     # print("indicator not in df.columns", shortform_indicator)
-                    
                     df = indicators.get_indicator_shortform(df, arr, 1)
+                    # try:
+                    # except :
+                    #     # print(path)
+                    #     pass
                     # print(df)
                     # df = indicators.sma_generator(df, arr[1], arr[2])
                     
                     df_saving.to_file(df, path)
+            df_saving.remove_lock(path)
             
     else:
         
@@ -150,11 +156,11 @@ def apply_indicators(stock, timeframe_value ,shortform_indicator, arr):
 # fastest way to check the columns if exists_________________________________________
 
 def is_column_present(stock, timeframe_value ,shortform_indicator):
-
+    # print("timeframe_value________________________", timeframe_value, type(timeframe_value))
     if timeframe_value == "Daily" or timeframe_value == "Weekly" or timeframe_value == "Monthly":
         path = f"indicator_process/{stock}_{timeframe_value}"
     
-    elif 1 <= timeframe_value & timeframe_value <= 60*5:
+    elif 1 <= timeframe_value and timeframe_value <= 60*5:
         path = f"indicator_process/"+str(stock)+ "_"+str(timeframe_value)+"min"
     
         

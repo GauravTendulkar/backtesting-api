@@ -293,3 +293,44 @@ def convert_daily_weekly_and_monthly(df_daily, tf):
 
 
     return df_weekly
+
+
+
+# def convert_daily_weekly_and_monthly(df_daily, tf):
+#     """
+#     Converts a daily OHLCV dataframe to either weekly or monthly timeframe.
+    
+#     Parameters:
+#         df_daily: pd.DataFrame, must have DateTimeIndex and columns ['symbol','open','high','low','close','volume']
+#         tf: str, either 'Weekly' or 'Monthly'
+        
+#     Returns:
+#         pd.DataFrame: Converted OHLCV, indexed by first date of period
+#     """
+
+#     # Ensure DateTimeIndex
+#     df = df_daily.copy()
+#     if not isinstance(df.index, pd.DatetimeIndex):
+#         df.index = pd.to_datetime(df.index)
+#     ohlc_dict = {
+#         'symbol': 'first',  # picks the symbol as all are same within period
+#         'open': 'first',
+#         'high': 'max',
+#         'low': 'min',
+#         'close': 'last',
+#         'volume': 'sum'
+#     }
+
+#     if tf == "Weekly":
+#         # 'W' means weekly (by default, Sun/Mon as week start)
+#         grouped = df.resample('W', label='left', closed='left').apply(ohlc_dict)
+#     elif tf == "Monthly":
+#         grouped = df.resample('M').apply(ohlc_dict)
+#     else:
+#         raise ValueError("tf must be 'Weekly' or 'Monthly'")
+
+#     # Flatten column MultiIndex if needed (shouldn't be, but just in case)
+#     if isinstance(grouped.columns, pd.MultiIndex):
+#         grouped.columns = ['_'.join(filter(None, col)).strip() for col in grouped.columns.values]
+#     grouped.index.name = "datetime"
+#     return grouped
