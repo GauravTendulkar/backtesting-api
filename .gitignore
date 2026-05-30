@@ -40,7 +40,7 @@ output.txt
 *.csv
 *.txt
 *.json
-functions_duckdb/indicator_files/*.parquet
+functions_duckdb/indicator_files/*.parquet 
 
 */*.duckdb 
 *.duckdb
@@ -48,4 +48,8 @@ functions_duckdb/indicator_files/*.parquet
 *.sqlite
 
 *.parquet
-database_duckdb/*
+database_duckdb/* 
+
+
+Trash
+files

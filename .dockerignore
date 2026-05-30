@@ -1,46 +1,20 @@
 **/__pycache__/
 env
 .env
-Clean_data/1min/*.csv
-Clean_data/newData/*.csv
-Clean_data/RAW_daily_data_tradingview/*.csv
 
-Clean_data/1min/*.parquet
-Clean_data/newData/*.parquet
-Clean_data/RAW_daily_data_tradingview/*.parquet
 
-Clean_data/df_columns_exists.json
-Clean_data/uniqueTime_*.csv
+Dockerfile
+.dockerignore
 
-fast_cache/*.csv
-fast_cache/*.parquet
+Trash
+files
 
+indicator_functions_list.txt
+indicator_list.txt
+w_output.txt
 *.ipynb
-test.py
-Tracking.csv
-indicator_process/*.csv
-indicator_process/*.parquet
-indicator_process/fast_cache/_latest_file.csv
-indicator_process/fast_cache/*.parquet
-
-fastCache_file_tracking.csv
-stock_column_file_tracking.csv
+permissions.json
+w_BT_Table.csv 
+w_sqlite_table.csv
 
 
-functions_duckdb/indicator_files/*.parquet
-fastCache_duckdb.*
-indicator_process_duckdb/*
-fastCache_duckdb/*
-
-*/*.duckdb 
-*.duckdb
-*/*.sqlite
-*.sqlite
-
-database_duckdb/*
-
-w_db_assignments.json
-*.csv
-
-Clean_data/1min copy/*
-Clean_data/RAW_daily_data_tradingview copy/*

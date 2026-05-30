@@ -1,5 +1,6 @@
 # Use official Python image
-FROM python:3.12.2
+
+FROM python:3.12-slim
 
 # Environment settings
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -18,7 +19,8 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 
 # Install dependencies
-RUN pip install --upgrade pip && pip install -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
