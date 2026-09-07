@@ -79,52 +79,52 @@ def worker_process(worker_id: int, job_queue: Queue, result_queue: Queue):
             pass
         
         if data["mode"] == "entry_exit_backtest":
-            try:
-                result = duckdb_backtesting(data["data"], date_ranges, stock_list, stock_list_details,  create, duckdb_conn, sl_db)
-                # print("entry_exit_backtest result", result)
-                result_queue.put({
-                    "job_id"    : job_id,
-                    "worker_id" : worker_id,
-                    "pid"       : mp.current_process().pid,
-                    "stock_list" : stock_list,
-                    "return_data"    : result,
+            # try:
+            result = duckdb_backtesting(data["data"], date_ranges, stock_list, stock_list_details,  create, duckdb_conn, sl_db)
+            # print("entry_exit_backtest result", result)
+            result_queue.put({
+                "job_id"    : job_id,
+                "worker_id" : worker_id,
+                "pid"       : mp.current_process().pid,
+                "stock_list" : stock_list,
+                "return_data"    : result,
+                
+            })
+            # except Exception as e:
+            #     print("ERROR", e)
+            #     result_queue.put({
+            #         "job_id"    : job_id,
+            #         "worker_id" : worker_id,
+            #         "pid"       : mp.current_process().pid,
+            #         "stock_list" : stock_list,
+            #         "return_data"    : None,
                     
-                })
-            except Exception as e:
-                print("ERROR", e)
-                result_queue.put({
-                    "job_id"    : job_id,
-                    "worker_id" : worker_id,
-                    "pid"       : mp.current_process().pid,
-                    "stock_list" : stock_list,
-                    "return_data"    : None,
-                    
-                })
+            #     })
 
         elif data["mode"] == "condition_scanner":
-            try:
-                result = duckdb_condition_scanner( data["data"], date_ranges, stock_list, stock_list_details, create, duckdb_conn)
-            # print("result", result)
-            # pass
-        
-                result_queue.put({
-                    "job_id"    : job_id,
-                    "worker_id" : worker_id,
-                    "pid"       : mp.current_process().pid,
-                    "stock_list" : stock_list,
-                    "return_data"    : result,
+            # try:
+            result = duckdb_condition_scanner( data["data"], date_ranges, stock_list, stock_list_details, create, duckdb_conn)
+        # print("result", result)
+        # pass
+    
+            result_queue.put({
+                "job_id"    : job_id,
+                "worker_id" : worker_id,
+                "pid"       : mp.current_process().pid,
+                "stock_list" : stock_list,
+                "return_data"    : result,
+                
+            })
+            # except Exception as e:
+            #     print("ERROR", e)
+            #     result_queue.put({
+            #         "job_id"    : job_id,
+            #         "worker_id" : worker_id,
+            #         "pid"       : mp.current_process().pid,
+            #         "stock_list" : stock_list,
+            #         "return_data"    : None,
                     
-                })
-            except Exception as e:
-                print("ERROR", e)
-                result_queue.put({
-                    "job_id"    : job_id,
-                    "worker_id" : worker_id,
-                    "pid"       : mp.current_process().pid,
-                    "stock_list" : stock_list,
-                    "return_data"    : None,
-                    
-                })
+            #     })
         elif data["mode"] == "delete_tables":
          
             create.drop_all_table()

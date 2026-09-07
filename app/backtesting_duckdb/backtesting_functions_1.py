@@ -141,19 +141,20 @@ class BackTestingFunction:
                 
                 if BackTestingFunction.if_index_exist(indicator_arr, [0]):
                     
-                    if indicator_arr[0] == "entry":
+                    if indicator_arr[0] == "prevEntry":
                         # temp_str += "float(Tracking.loc[Tracking.index[-1], 'entry'])"
                         # temp_str += "float(Tracking.loc[Tracking_index, 'entry'])"
                         # temp_str += "float(entry_array[Tracking_index])"
                         text = "sl_db.open_entry_price(df['symbol'][i])"
                         connect_special_function.append(text)
+                    elif indicator_arr[0] == "first_entry":
+                        connect_special_function.append("""sl_db.first_entry()""")
                     elif indicator_arr[0] == "time":
                         # temp_str += "float(Tracking.loc[Tracking.index[-1], 'entry'])"
                         # temp_str += "int(df_data[i][time_index]/100)"
                         # temp_str += "df['time_int'][i]"
                         connect_special_function.append("df['time_int'][i]")
-                    elif indicator_arr[0] == "prevPosition":
-                        pass
+                    
                     elif indicator_arr[0] == "countPrevTrades":
                         # date_text = "f'{date_str[0:10]} {date_str[11:19]}'"
                         date_text = "f'{date_str[0:10]}'"
@@ -167,6 +168,35 @@ class BackTestingFunction:
                         # temp_str += "functions.count_previous_entry_intraday(Tracking, int(df_data[i][date_index]))"
                         temp_str += "functions.count_previous_entry_monthly(date_number_array, int(df_data[i][date_index]))"
 
+                    elif indicator_arr[0] == "open_position_quantity":
+                        connect_special_function.append("""sl_db.open_position_quantity(df['symbol'][i])""")
+
+                    elif indicator_arr[0] == "open_position_value":
+                        connect_special_function.append("""sl_db.open_position_value(df['symbol'][i])""")
+                    elif indicator_arr[0] == "open_position_avg_price":
+                        connect_special_function.append("""sl_db.open_position_avg_price(df['symbol'][i])""")
+                    elif indicator_arr[0] == "open_entry_count":
+                        connect_special_function.append(f"""sl_db.open_entry_count(df['symbol'][i], label="{indicator_arr[2]}", entryexit="{indicator_arr[1]}")""")
+                    elif indicator_arr[0] == "open_trade":
+                        # .work on this tomorrow
+                        # open_trade(self, mode, stock, label="", entryexit="entry")
+                        text = f"""sl_db.open_trade(  stock = df['symbol'][i], mode = "{indicator_arr[1]}", label = "{indicator_arr[3]}", entryexit = "{indicator_arr[2]}")"""
+                        # print("******************************************************", text)
+                        connect_special_function.append(text)
+                        # pass
+                    elif indicator_arr[0] == "add_datetime":
+                                            
+                        # text = f"""sl_db.add_datetime(  stock = df['symbol'][i], mode = "{indicator_arr[1]}", label = "{indicator_arr[3]}", entryexit = "{indicator_arr[2]}")"""
+                        text = f"""sl_db.add_datetime(  stock = df['symbol'][i], option = "{indicator_arr[1]}", mode = "{indicator_arr[2]}", label = "{indicator_arr[3]}", days = {indicator_arr[4]}, hours = {indicator_arr[5]}, minutes = {indicator_arr[6]}) """
+                        print("add_datetime", text)
+                        connect_special_function.append(text)
+                    elif indicator_arr[0] == "datetime":
+                        text = f"""sl_db.datetime(  date_int = df["date_int"][i], time_int = df["time_int"][i]) """
+                        connect_special_function.append(text)
+
+                    elif indicator_arr[0] == "percentage_quantity":
+                        connect_special_function.append(f"""sl_db.exit_percentage_to_quantity({indicator_arr[1]} ,df['symbol'][i])""")
+                    
                     elif indicator_arr[0] == "number":
                         connect_special_function.append(indicator_arr[1])
                         
@@ -200,10 +230,17 @@ class BackTestingFunction:
 
                     elif  indicator_arr[0] == "max":
                         connect_special_function.append(indicator_arr[0])
-                        pass
+                        
                     elif  indicator_arr[0] == "min":
                         connect_special_function.append(indicator_arr[0])
-                        pass
+                        
+                if BackTestingFunction.if_index_exist(indicator_arr, [1]):
+                    if indicator_arr[1] == "number_of_trades":
+                        date_text = "f'{date_str[0:10]}'"
+                        # text = f"""sl_db.previous_position(df['symbol'][i], mode = 'count', date = {date_text})"""
+                        
+                        text = f"""sl_db.number_of_trades(  stock = df['symbol'][i], mode = "{indicator_arr[2]}", date = {date_text}, label = "{indicator_arr[4]}", entryexit = "{indicator_arr[3]}", tf = "{indicator_arr[0]}")"""
+                        connect_special_function.append(text)
 
                 if BackTestingFunction.if_index_exist(indicator_arr, [2]):
                     if BackTestingFunction.indicator_column_check(indicator_arr):

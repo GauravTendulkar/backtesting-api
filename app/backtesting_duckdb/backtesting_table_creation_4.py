@@ -256,34 +256,79 @@ class BacktestingTable:
 
 
     # 
+    # def joining_condition(self, smallest, tf, column_name):
+    #     column_name = f'"{column_name}"'
+    #     if tf == "Daily" or tf == "Weekly" or tf == "Monthly" or tf == "Yearly":
+    #         if type(smallest) == int:
+    #             if tf == "Daily":
+    #                 return f"""LEFT JOIN {column_name} ON date_trunc('day', OHLC.DATETIME) =  date_trunc('day', {column_name}.DATETIME) """
+    #             elif tf == "Weekly":
+    #                 return f""" LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('week',{column_name}.DATETIME)  AND OHLC.DATETIME < date_trunc('week',{column_name}.DATETIME ) + INTERVAL 1 WEEK)"""
+    #             elif tf == "Monthly":
+    #                 return f""" LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('month',{column_name}.DATETIME)  AND OHLC.DATETIME < date_trunc('month',{column_name}.DATETIME ) + INTERVAL 1 MONTH)"""
+    #             elif tf == "Yearly":
+    #                 return f""" LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('year',{column_name}.DATETIME)  AND OHLC.DATETIME < date_trunc('year',{column_name}.DATETIME ) + INTERVAL 1 YEAR)"""
+    #         else:
+    #             if smallest == "Daily" and (tf == "Weekly" or tf == "Monthly" or tf == "Yearly"):
+    #                 if tf == "Weekly":
+    #                     return f""" LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('week',{column_name}.DATETIME)  AND OHLC.DATETIME < date_trunc('week',{column_name}.DATETIME ) + INTERVAL 1 WEEK)"""
+    #                 elif tf == "Monthly":
+    #                     return f""" LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('month',{column_name}.DATETIME)  AND OHLC.DATETIME < date_trunc('month',{column_name}.DATETIME ) + INTERVAL 1 MONTH)"""
+    #                 elif tf == "Yearly":
+    #                     return f""" LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('year',{column_name}.DATETIME)  AND OHLC.DATETIME < date_trunc('year',{column_name}.DATETIME ) + INTERVAL 1 YEAR)"""
+
+    #             elif smallest == "Weekly" and tf == "Monthly":
+                    
+    #                 return f""" LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('month',{column_name}.DATETIME)  AND OHLC.DATETIME < date_trunc('month',{column_name}.DATETIME ) + INTERVAL 1 MONTH)"""
+    #             elif smallest == "Weekly" and tf == "Yearly":
+                    
+    #                 return f""" LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('year',{column_name}.DATETIME)  AND OHLC.DATETIME < date_trunc('year',{column_name}.DATETIME ) + INTERVAL 1 YEAR)"""
+    #             elif smallest == "Monthly" and tf == "Yearly":
+                    
+    #                 return f""" LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('year',{column_name}.DATETIME)  AND OHLC.DATETIME < date_trunc('year',{column_name}.DATETIME ) + INTERVAL 1 YEAR)"""
+
+    #     if smallest == tf :
+            
+    #         return f"""LEFT JOIN {column_name} ON OHLC.DATETIME = {column_name}.DATETIME"""
+    #     elif smallest <= tf :
+    #         return f""" LEFT JOIN {column_name} ON (OHLC.DATETIME >= {column_name}.DATETIME  AND OHLC.DATETIME < {column_name}.DATETIME_END ) """
+
+
     def joining_condition(self, smallest, tf, column_name):
         column_name = f'"{column_name}"'
-        if tf == "Daily" or tf == "Weekly" or tf == "Monthly":
-            if type(smallest) == int:
-                if tf == "Daily":
-                    return f"""LEFT JOIN {column_name} ON date_trunc('day', OHLC.DATETIME) =  date_trunc('day', {column_name}.DATETIME) """
-                elif tf == "Weekly":
-                    return f""" LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('week',{column_name}.DATETIME)  AND OHLC.DATETIME < date_trunc('week',{column_name}.DATETIME ) + INTERVAL 1 WEEK)"""
-                elif tf == "Monthly":
-                    return f""" LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('month',{column_name}.DATETIME)  AND OHLC.DATETIME < date_trunc('month',{column_name}.DATETIME ) + INTERVAL 1 MONTH)"""
-            else:
-                if smallest == "Daily" and (tf == "Weekly" or tf == "Monthly"):
-                    if tf == "Weekly":
-                        return f""" LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('week',{column_name}.DATETIME)  AND OHLC.DATETIME < date_trunc('week',{column_name}.DATETIME ) + INTERVAL 1 WEEK)"""
-                    elif tf == "Monthly":
-                        return f""" LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('month',{column_name}.DATETIME)  AND OHLC.DATETIME < date_trunc('month',{column_name}.DATETIME ) + INTERVAL 1 MONTH)"""
-                
-                elif smallest == "Weekly" and tf == "Monthly":
-                    
-                    return f""" LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('month',{column_name}.DATETIME)  AND OHLC.DATETIME < date_trunc('month',{column_name}.DATETIME ) + INTERVAL 1 MONTH)"""
-                
 
-        if smallest == tf :
-            
+        if isinstance(smallest, int):
+            if tf == "Daily":
+                return f"""LEFT JOIN {column_name} ON date_trunc('day', OHLC.DATETIME) = date_trunc('day', {column_name}.DATETIME)"""
+            elif tf == "Weekly":
+                return f"""LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('week', {column_name}.DATETIME) AND OHLC.DATETIME < date_trunc('week', {column_name}.DATETIME) + INTERVAL 1 WEEK)"""
+            elif tf == "Monthly":
+                return f"""LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('month', {column_name}.DATETIME) AND OHLC.DATETIME < date_trunc('month', {column_name}.DATETIME) + INTERVAL 1 MONTH)"""
+            elif tf == "Yearly":
+                return f"""LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('year', {column_name}.DATETIME) AND OHLC.DATETIME < date_trunc('year', {column_name}.DATETIME) + INTERVAL 1 YEAR)"""
+
+        else:
+            if smallest == "Daily" and tf == "Weekly":
+                return f"""LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('week', {column_name}.DATETIME) AND OHLC.DATETIME < date_trunc('week', {column_name}.DATETIME) + INTERVAL 1 WEEK)"""
+            elif smallest == "Daily" and tf == "Monthly":
+                return f"""LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('month', {column_name}.DATETIME) AND OHLC.DATETIME < date_trunc('month', {column_name}.DATETIME) + INTERVAL 1 MONTH)"""
+            elif smallest == "Daily" and tf == "Yearly":
+                return f"""LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('year', {column_name}.DATETIME) AND OHLC.DATETIME < date_trunc('year', {column_name}.DATETIME) + INTERVAL 1 YEAR)"""
+
+            elif smallest == "Weekly" and tf == "Monthly":
+                return f"""LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('month', {column_name}.DATETIME) AND OHLC.DATETIME < date_trunc('month', {column_name}.DATETIME) + INTERVAL 1 MONTH)"""
+            elif smallest == "Weekly" and tf == "Yearly":
+                return f"""LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('year', {column_name}.DATETIME) AND OHLC.DATETIME < date_trunc('year', {column_name}.DATETIME) + INTERVAL 1 YEAR)"""
+
+            elif smallest == "Monthly" and tf == "Yearly":
+                return f"""LEFT JOIN {column_name} ON (OHLC.DATETIME >= date_trunc('year', {column_name}.DATETIME) AND OHLC.DATETIME < date_trunc('year', {column_name}.DATETIME) + INTERVAL 1 YEAR)"""
+
+        if smallest == tf:
             return f"""LEFT JOIN {column_name} ON OHLC.DATETIME = {column_name}.DATETIME"""
-        elif smallest <= tf :
-            return f""" LEFT JOIN {column_name} ON (OHLC.DATETIME >= {column_name}.DATETIME  AND OHLC.DATETIME < {column_name}.DATETIME_END ) """
+        elif isinstance(smallest, str) and isinstance(tf, str) and smallest <= tf:
+            return f"""LEFT JOIN {column_name} ON (OHLC.DATETIME >= {column_name}.DATETIME AND OHLC.DATETIME < {column_name}.DATETIME_END)"""
 
+        return ""
 
     def get_all_tf_joining_string_query_list(self):
         final_text="""
@@ -392,7 +437,7 @@ WITH
 """
         for _, tf in enumerate(self.unique_candles_for_each_time_frame):
             comment = ""
-            if tf == "Daily" or tf == "Weekly" or tf == "Monthly":
+            if tf == "Daily" or tf == "Weekly" or tf == "Monthly" or tf == "Yearly":
                 comment = "--"
             elif type(tf) == int: 
                 pass

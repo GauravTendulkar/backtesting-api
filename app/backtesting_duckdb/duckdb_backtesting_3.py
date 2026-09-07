@@ -73,7 +73,7 @@ def duckdb_backtesting_3(data, date_ranges, stock_list, stock_list_details, crea
     sl_db.init_table()
     print("init_table",(time.perf_counter_ns() - init)/1000/1000, "ms")
     # print("Running in process:", os.getpid())
-    
+    # print("data", data)
     # print("____________________")
     # print(data['stockList']) 
     # print("____________________")  
@@ -105,12 +105,20 @@ def duckdb_backtesting_3(data, date_ranges, stock_list, stock_list_details, crea
     
 
     btf_obj = BackTestingFunction(stock_list=list_stocks)
-    btf_obj.convert_req_data_to_list([data["entry"]], tag = "entry")
-    btf_obj.convert_req_data_to_list([data["entryPrice"]], tag = "entryPrice")
-    btf_obj.convert_req_data_to_list([data["quantity"]], tag = "quantity")
+    # btf_obj.convert_req_data_to_list([data["entry"]], tag = "entry")
+    # btf_obj.convert_req_data_to_list([data["entryPrice"]], tag = "entryPrice")
+    # btf_obj.convert_req_data_to_list([data["quantity"]], tag = "quantity")
+
+
+    for index, x in enumerate(data["entryCollection"]):
+        btf_obj.convert_req_data_to_list([x["entry"]], tag = f"entryCollection_{index}_entry")
+        btf_obj.convert_req_data_to_list([x["entryPrice"]], tag = f"entryCollection_{index}_entryPrice")
+        btf_obj.convert_req_data_to_list([x["quantity"]], tag = f"entryCollection_{index}_quantity")
+
     for index, x in enumerate(data["exitCollection"]):
         btf_obj.convert_req_data_to_list([x["exit"]], tag = f"exitCollection_{index}_exit")
         btf_obj.convert_req_data_to_list([x["exitPrice"]], tag = f"exitCollection_{index}_exitPrice")
+        btf_obj.convert_req_data_to_list([x["quantity"]], tag = f"exitCollection_{index}_quantity")
         
 
 
@@ -118,12 +126,18 @@ def duckdb_backtesting_3(data, date_ranges, stock_list, stock_list_details, crea
     # create  = CreateFiles(duckdb_conn = duckdb_conn, stock_list=list_stocks)
     create.manual_init(duckdb_conn = duckdb_conn, stock_list=list_stocks)
     print("___________")
-    create.accumulate_request_data(btf_obj.tags["entry"])
-    create.accumulate_request_data(btf_obj.tags["entryPrice"])
-    create.accumulate_request_data(btf_obj.tags["quantity"])
+    # create.accumulate_request_data(btf_obj.tags["entry"])
+    # create.accumulate_request_data(btf_obj.tags["entryPrice"])
+    # create.accumulate_request_data(btf_obj.tags["quantity"])
+    for index, x in enumerate(data["entryCollection"]):
+        create.accumulate_request_data(btf_obj.tags[f"entryCollection_{index}_entry"])
+        create.accumulate_request_data(btf_obj.tags[f"entryCollection_{index}_entryPrice"])
+        create.accumulate_request_data(btf_obj.tags[f"entryCollection_{index}_quantity"])
+
     for index, x in enumerate(data["exitCollection"]):
         create.accumulate_request_data(btf_obj.tags[f"exitCollection_{index}_exit"])
         create.accumulate_request_data(btf_obj.tags[f"exitCollection_{index}_exitPrice"])
+        create.accumulate_request_data(btf_obj.tags[f"exitCollection_{index}_quantity"])
 
     # print(create.raw_data_list)
     print("___________")
@@ -139,12 +153,18 @@ def duckdb_backtesting_3(data, date_ranges, stock_list, stock_list_details, crea
     
 
     obj = BacktestingTable(stock_list=list_stocks)
-    obj.accumulate_request_data(btf_obj.tags["entry"])
-    obj.accumulate_request_data(btf_obj.tags["entryPrice"])
-    obj.accumulate_request_data(btf_obj.tags["quantity"])
+    # obj.accumulate_request_data(btf_obj.tags["entry"])
+    # obj.accumulate_request_data(btf_obj.tags["entryPrice"])
+    # obj.accumulate_request_data(btf_obj.tags["quantity"])
+    for index, x in enumerate(data["entryCollection"]):
+        obj.accumulate_request_data(btf_obj.tags[f"entryCollection_{index}_entry"])
+        obj.accumulate_request_data(btf_obj.tags[f"entryCollection_{index}_entryPrice"])
+        obj.accumulate_request_data(btf_obj.tags[f"entryCollection_{index}_quantity"])
+
     for index, x in enumerate(data["exitCollection"]):
         obj.accumulate_request_data(btf_obj.tags[f"exitCollection_{index}_exit"])
         obj.accumulate_request_data(btf_obj.tags[f"exitCollection_{index}_exitPrice"])
+        obj.accumulate_request_data(btf_obj.tags[f"exitCollection_{index}_quantity"])
     
     # start_date = '2020-01-01'
     # end_date = '2021-01-01'
@@ -154,12 +174,18 @@ def duckdb_backtesting_3(data, date_ranges, stock_list, stock_list_details, crea
     
     
     
-    btf_obj.find_special_functions([data["entry"]] , "entry")
-    btf_obj.find_special_functions([data["entryPrice"]] , "entryPrice")
-    btf_obj.find_special_functions([data["quantity"]] , "quantity")
+    # btf_obj.find_special_functions([data["entry"]] , "entry")
+    # btf_obj.find_special_functions([data["entryPrice"]] , "entryPrice")
+    # btf_obj.find_special_functions([data["quantity"]] , "quantity")
+    for index, x in enumerate(data["entryCollection"]):
+        btf_obj.find_special_functions([x["entry"]], f"entryCollection_{index}_entry")
+        btf_obj.find_special_functions([x["entryPrice"]], f"entryCollection_{index}_entryPrice")
+        btf_obj.find_special_functions([x["quantity"]], f"entryCollection_{index}_quantity")
+
     for index, x in enumerate(data["exitCollection"]):
         btf_obj.find_special_functions([x["exit"]], f"exitCollection_{index}_exit")
         btf_obj.find_special_functions([x["exitPrice"]], f"exitCollection_{index}_exitPrice")
+        btf_obj.find_special_functions([x["quantity"]], f"exitCollection_{index}_quantity")
 
 
     obj.collect_depth_zero_uniqueid = btf_obj.collect_depth_zero_uniqueid
@@ -205,15 +231,25 @@ def duckdb_backtesting_3(data, date_ranges, stock_list, stock_list_details, crea
 
 
     # entry = btf_obj.entry_to_equation([data["entry"]] , None, obj.smallest_tf)
-    entry = btf_obj.entry_to_equation([data["entry"]] , None, obj.smallest_tf)
-    entryPrice = btf_obj.entry_to_equation([data["entryPrice"]] , None, obj.smallest_tf)
-    quantity = btf_obj.entry_to_equation([data["quantity"]] , None, obj.smallest_tf)
+    # entry = btf_obj.entry_to_equation([data["entry"]] , None, obj.smallest_tf)
+    # entryPrice = btf_obj.entry_to_equation([data["entryPrice"]] , None, obj.smallest_tf)
+    # quantity = btf_obj.entry_to_equation([data["quantity"]] , None, obj.smallest_tf)
+    entryCollection = []
+    for i in data["entryCollection"]:
+        entryCollection.append({
+            "entry": btf_obj.entry_to_equation([i["entry"]] , None, obj.smallest_tf),
+            "entryPrice": btf_obj.entry_to_equation([i["entryPrice"]] , None, obj.smallest_tf),
+            "quantity": btf_obj.entry_to_equation([i["quantity"]] , None, obj.smallest_tf),
+            "label": i["label"]
+                               })
+        
     exitCollection = []
     for i in data["exitCollection"]:
        
         exitCollection.append({
             "exit": btf_obj.entry_to_equation([i["exit"]] , None, obj.smallest_tf),
             "exitPrice": btf_obj.entry_to_equation([i["exitPrice"]] , None, obj.smallest_tf),
+            "quantity": btf_obj.entry_to_equation([i["quantity"]] , None, obj.smallest_tf),
             "label": i["label"]
                                })
 
@@ -229,13 +265,21 @@ def duckdb_backtesting_3(data, date_ranges, stock_list, stock_list_details, crea
     # print(exitCollection)
     
     # pre_c_entry = compile(entry, "<string>", "eval")
-    pre_c_entry = compile(entry, "<string>", "eval")
-    pre_c_entryPrice = compile(entryPrice, "<string>", "eval")
-    pre_c_quantity = compile(quantity, "<string>", "eval")
+    # pre_c_entry = compile(entry, "<string>", "eval")
+    # pre_c_entryPrice = compile(entryPrice, "<string>", "eval")
+    # pre_c_quantity = compile(quantity, "<string>", "eval")
+    pre_c_entryCollection = copy.deepcopy(entryCollection)
+    for s in range(len(pre_c_entryCollection)):
+        pre_c_entryCollection[s]["entry"] = compile(pre_c_entryCollection[s]["entry"], "<string>", "eval")
+        print('pre_c_entryCollection[s]["entryPrice"]', pre_c_entryCollection[s]["quantity"])
+        pre_c_entryCollection[s]["entryPrice"] = compile(pre_c_entryCollection[s]["entryPrice"], "<string>", "eval")
+        pre_c_entryCollection[s]["quantity"] = compile(pre_c_entryCollection[s]["quantity"], "<string>", "eval")
+
     pre_c_exitCollection = copy.deepcopy(exitCollection)
     for s in range(len(pre_c_exitCollection)):
         pre_c_exitCollection[s]["exit"] = compile(pre_c_exitCollection[s]["exit"], "<string>", "eval")
         pre_c_exitCollection[s]["exitPrice"] = compile(pre_c_exitCollection[s]["exitPrice"], "<string>", "eval")
+        pre_c_exitCollection[s]["quantity"] = compile(pre_c_exitCollection[s]["quantity"], "<string>", "eval")
 
 
     if data["scanCategory"] == "":
@@ -280,94 +324,141 @@ def duckdb_backtesting_3(data, date_ranges, stock_list, stock_list_details, crea
     is_intraday_mode= not is_high_tf and not is_long_short
     is_intraday_long_short = tradeSetup in {"intraday_long", "intraday_short"}
     # run every query
+    # print('pre_c_exitCollection[entry_index]["entry"]', entryCollection["entryCollection"][0]["entry"])
     for f in range(0, len(final_text_array)):
         with open("w_output.txt", "w") as file:
             file.write(final_text_array[f])
         try:
             df = duckdb_conn.sql(final_text_array[f]).fetchnumpy()
-        except:
+            new_Df = pd.DataFrame(df)
+            new_Df.to_csv("w_BT_Table.csv")
+        except Exception as e:
+            print(f"Error occurred while processing query {f}: {e}")
             return pd.DataFrame()
         flag_entry = 0
         flag_exit = 0
-
+        print(len(df["datetime"]),  "start")
+        # print(str(df["symbol"].iloc[0]))
         for i in range(0, len(df["datetime"])):
-            
-            if df["start_symbol"][i] == 1:
-                flag_entry = 0
-                flag_exit = 0
-            if is_intraday_mode:
-                if flag_exit == 0 and df["start"][i] == 1:
-                    flag_entry = 1
-            if (is_high_tf or is_long_short) and flag_entry == 0 and flag_exit == 0:
-                flag_entry = 1
+            # print("open_position_value",sl_db.open_position_value(df["symbol"][i]))
+            # print("open_position_avg_price", sl_db.open_position_avg_price(df["symbol"][i]))
+            # print("open_entry_count", sl_db.open_entry_count(df["symbol"][i]))
+            # try:
+            #     print("first_trade_cache", sl_db.first_trade_cache)
+            # except:
 
-            # No entry at last intraday candle
-            if is_intraday_mode and df["end"][i] == 1:
-                flag_entry = 0
-            
-            if flag_entry == 1:
-                try:
-                    date_str = str(df["datetime"][i])
-                    date_str = f"{date_str[0:10]} {date_str[11:19]}"
-                    # previous_position = sl_db.previous_position(df['symbol'][i], mode = 'count', date = f'{date_str[0:10]}')
-                    
-                    if eval(pre_c_entry, globals(), locals()):
-                        
-                        # date_str = str(df["datetime"][i])
-                        # date_str = f"{date_str[0:10]} {date_str[11:19]}"
-                        sl_db.insert_entry(datetime = date_str,
-                                            symbol= df["symbol"][i],
-                                            price= eval(pre_c_entryPrice, globals(), locals()),
-                                            quantity= round(eval(pre_c_quantity, globals(), locals()), 0), 
-                                            buysell_setup = str(buysell),
-                                            label= "Not Defined"  )
-                        flag_entry = 0
-                        flag_exit = 1
-                        
-                except Exception as e:
-                    # print(i)
-                    # print("ERROR 2", e)
-                    pass
+                # pass
+            # if df["start_symbol"][i] == 1:
+            #     flag_entry = 0
+            #     flag_exit = 0
+            # if is_intraday_mode:
+            #     if flag_exit == 0 and df["start"][i] == 1:
+            #         flag_entry = 1
+            # if (is_high_tf or is_long_short) and flag_entry == 0 and flag_exit == 0:
+            #     flag_entry = 1
 
-            elif flag_exit == 1:
+            # # No entry at last intraday candle
+            # if is_intraday_mode and df["end"][i] == 1:
+            #     flag_entry = 0
+            
+            # if flag_entry == 1:
+                # print(eval(pre_c_exitCollection[entry_index]["entry"], globals(), locals()))
+            
+            try:
+                date_str = str(df["datetime"][i])
+                date_str = f"{date_str[0:10]} {date_str[11:19]}"
+                # previous_position = sl_db.previous_position(df['symbol'][i], mode = 'count', date = f'{date_str[0:10]}')
                 
-                for exit_index, exit_item in enumerate(exitCollection):
-                    if eval(pre_c_exitCollection[exit_index]["exit"], globals(), locals()):
+                # if eval(pre_c_entry, globals(), locals()):
+                    
+                #     # date_str = str(df["datetime"][i])
+                #     # date_str = f"{date_str[0:10]} {date_str[11:19]}"
+                #     sl_db.insert_entry(datetime = date_str,
+                #                         symbol= df["symbol"][i],
+                #                         price= eval(pre_c_entryPrice, globals(), locals()),
+                #                         quantity= round(eval(pre_c_quantity, globals(), locals()), 0), 
+                #                         buysell_setup = str(buysell),
+                #                         label= "Not Defined"  )
+                    # flag_entry = 0
+                    # flag_exit = 1
+                # print("working")
+                for entry_index, entry_item in enumerate(pre_c_entryCollection):
+                    
+                    try:
+                        if eval(entry_item["entry"], globals(), locals()):
+                            # print(eval(pre_c_exitCollection[entry_index]["entry"], globals(), locals()))
+                            # print( ,
+                            #       eval(entry_item["quantity"], globals(), locals()))
+                            # print('( 5000 / df["Daily_Daily_0_open"][i]  )', df["datetime"][i], df["Daily_Daily_0_open"][i])
+                            sl_db.insert_entry(datetime = date_str,
+                                            symbol= df["symbol"][i],
+                                            price= eval(entry_item["entryPrice"], globals(), locals()),
+                                            quantity= round(eval(entry_item["quantity"], globals(), locals()), 0), 
+                                            buysell_setup = str(buysell),
+                                            label= entry_item["label"]  )
+                            # flag_entry = 0
+                            # flag_exit = 1
+                            # print("Entry____________________")
+                            # print("time_int", type(df['time_int'][i]),df['time_int'][i], sl_db.datetime(df['date_int'][i], df['time_int'][i]))
+                    except Exception as e:
+                        # print("Error inner", e)
+                        pass
+
+                    
+            except Exception as e:
+                # print("Error outer")
+                pass
+
+            # elif flag_exit == 1:
+                
+            for exit_index, exit_item in enumerate(exitCollection):
+                try:
+                    if eval(exit_item["exit"], globals(), locals()):
                         
                         date_str = str(df["datetime"][i])
                         date_str = f"{date_str[0:10]} {date_str[11:19]}"
                         sl_db.exit_percentage_quantity(datetime = date_str, 
                                 symbol= df["symbol"][i], 
-                                price= eval(pre_c_exitCollection[exit_index]["exitPrice"], globals(), locals()) , 
+                                price= eval(exit_item["exitPrice"], globals(), locals()) , 
                                 label= exit_item["label"], 
-                                percentage = 100)
-                        flag_exit = 0
-                        flag_entry = 1
+                                buysell_setup = str(buysell),
+                                # quantity = round(sl_db.exit_percentage_to_quantity(100, df["symbol"][i]), 0), )
+                                quantity= round(eval(exit_item["quantity"], globals(), locals()), 0), 
+                                )
+                        # flag_exit = 0
+                        # flag_entry = 1
                         break
+                except Exception as e:
+                    # print("Error inner exit", e)
+                    pass
 
-                # Universal exit
-                if is_intraday_mode and is_intraday_long_short and df["end"][i] == 1 and flag_exit == 1:
-                    
-                    date_str = str(df["datetime"][i])
-                    date_str = f"{date_str[0:10]} {date_str[11:19]}"
-                    sl_db.exit_percentage_quantity(datetime = date_str, 
-                                symbol= df["symbol"][i], 
-                                price= df["close"][i], 
-                                label= "universal exit", 
-                                percentage = 100)
-                    flag_entry = 0
-                    flag_exit = 0
+            # Universal exit
+            if is_intraday_mode and is_intraday_long_short and df["end"][i] == 1 : #and flag_exit == 1:
+                
+                date_str = str(df["datetime"][i])
+                date_str = f"{date_str[0:10]} {date_str[11:19]}"
+                sl_db.exit_percentage_quantity(datetime = date_str, 
+                            symbol= df["symbol"][i], 
+                            price= df["close"][i], 
+                            label= "universal exit", 
+                            buysell_setup = str(buysell),
+                            quantity = round(sl_db.exit_percentage_to_quantity(100, df["symbol"][i]), 0)
+                            )
+                # flag_entry = 0
+                # flag_exit = 0
 
-            if df["end_symbol"][i] == 1 and flag_exit == 1:
+            if df["end_symbol"][i] == 1 : # and flag_exit == 1:
                 date_str = str(df["datetime"][i])
                 date_str = f"{date_str[0:10]} {date_str[11:19]}"
                 sl_db.exit_percentage_quantity(datetime = date_str, 
                                 symbol= df["symbol"][i], 
                                 price= df["close"][i], 
                                 label= "last candle exit", 
-                                percentage = 100)
-                flag_entry = 0
-                flag_exit = 0
+                                buysell_setup = str(buysell),
+                                quantity = round(sl_db.exit_percentage_to_quantity(100, df["symbol"][i]), 0)
+                                )
+                # flag_entry = 0
+                # flag_exit = 0
             
 
 
@@ -382,7 +473,7 @@ def duckdb_backtesting_3(data, date_ranges, stock_list, stock_list_details, crea
     print("backtesting time" , (time.perf_counter_ns() - init)/1000/1000, "ms")   
     print(f"backtesting time/ stock {len(list_stocks)}" , (time.perf_counter_ns() - init)/1000/1000/len(list_stocks) , "ms")   
     # print(Tracking)
-    # Tracking.to_csv("Tracking.csv")
+    Tracking.to_csv("Tracking.csv")
     if len(Tracking) > 0:
         Tracking_symbol = np.array(Tracking["stock"])
         for i in range(0, len(Tracking_symbol)) :
@@ -390,8 +481,8 @@ def duckdb_backtesting_3(data, date_ranges, stock_list, stock_list_details, crea
         
         Tracking["stock"] = Tracking_symbol
 
-        Tracking = Tracking.rename(columns={'exit_label': 'sl'})
-        Tracking = Tracking.drop(columns=['entry_label'])
+        # Tracking = Tracking.rename(columns={'exit_label': 'sl'})
+        # Tracking = Tracking.drop(columns=['entry_label'])
 
     print("Total Time",(time.perf_counter_ns() - init_all)/1000/1000, "ms")
     print("Total Time",(time.perf_counter_ns() - init_all)/1000/1000/1000, "s")

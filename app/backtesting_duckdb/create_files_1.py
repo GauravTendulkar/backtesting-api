@@ -22,7 +22,7 @@ TIMEFRAME_CONVERSION = {
         15: '15min',
         30: '30min',
         60: '1h',
-        120:    '2h',
+        120: '2h',
         180: '3h',
         240: '4h',
         "Daily": "Daily",
@@ -202,7 +202,7 @@ def create_timeframe_files(duckdb_conn, stock, timeframe):
 
             duckdb_conn.execute(f'CREATE INDEX idx_{stock}_{TIMEFRAME_CONVERSION[timeframe]}_datetime ON "{stock}_{TIMEFRAME_CONVERSION[timeframe]}" (datetime);')
             # print("created", f"{INDICATOR_FILE_DATABASE}/symbol={stock}/tf={TIMEFRAME_CONVERSION[timeframe]}/data.parquet")
-    elif type(timeframe) == str and (timeframe == "Daily" or timeframe == "Weekly" or timeframe == "Monthly") :
+    elif type(timeframe) == str and (timeframe == "Daily" or timeframe == "Weekly" or timeframe == "Monthly" or timeframe == "Yearly") :
         # pass
         raw_data_path = f"{CLEAN_DATA_DAILY}/{stock}_Daily.{RAW_FILE_EXTENSION}"
         if os.path.isfile(raw_data_path):
@@ -852,7 +852,7 @@ SELECT * FROM df
                 # print(f"Table {table_name} exists")
                 pass
             else:
-                # print(f"Table {table_name} does NOT exist ")
+                print(f"Table {table_name} does NOT exist ")
                 create_timeframe_files(self.duckdb_conn, stock_name, time_frame)
                 self.remove_table_schema_cache()
                 print("cached Removed___________________________")
@@ -877,7 +877,7 @@ SELECT * FROM df
     #     )
 
         grouped_dict = self.table_schema_cache_fn()
-
+        print("grouped_dict", grouped_dict)
         group_by_table = {}
         for i in range(0, len(self.raw_data_list)):
             stock = self.raw_data_list[i][0]
